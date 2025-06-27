@@ -71,4 +71,4 @@ if __name__ == "__main__":
             print("用户手动终止，停止 Allure 服务器...")
             server_process.terminate()
     except Exception as e:
-        print(f"启动 Allure 服务器或打开浏览器时出现错误: {e}")
+        print(f"启动 Allure 服务器或打开浏览器时出现错误: {e}") 
