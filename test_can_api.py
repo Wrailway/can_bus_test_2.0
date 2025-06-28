@@ -1,3 +1,4 @@
+from asyncio import sleep
 import logging
 import pytest
 from OHandSerialAPI import HAND_RESP_SUCCESS, MAX_MOTOR_CNT,MAX_THUMB_ROOT_POS,MAX_FORCE_ENTRIES,OHandSerialAPI
@@ -312,8 +313,6 @@ def test_HAND_GetUsageStat(api):
 
 
 # def test_HAND_SetFingerPID(api):
-#     if api is None:
-#         pytest.skip("API 初始化失败，跳过测试")
 #     hand_id = 0x02
 #     finger_id = 0x01
 #     p = 10
@@ -364,8 +363,6 @@ def test_HAND_GetUsageStat(api):
 
 
 # def test_HAND_FingerStart(api):
-#     if api is None:
-#         pytest.skip("API 初始化失败，跳过测试")
 #     hand_id = 0x02
 #     finger_id_bits = 0x01
 #     remote_err = []
@@ -498,55 +495,211 @@ def test_HAND_GetUsageStat(api):
 #     err = api.HAND_ResetForce(hand_id, remote_err)
 #     assert err == HAND_RESP_SUCCESS
 
-# def test_HAND_SetSelfTestLevel(api):
-#     if api is None:
-#         pytest.skip("API 初始化失败，跳过测试")
+def test_HAND_SetSelfTestLevel(api):
+    hand_id = 0x02
+    SELF_TEST_LEVEL = {
+        '等待指令': 0,
+        '半自检': 1,
+        '完整自检': 2
+    }
+    
+    # 测试设置为半自检
+    remote_err = [0]
+    err = api.HAND_SetSelfTestLevel(hand_id, SELF_TEST_LEVEL['半自检'], remote_err)
+    assert err == HAND_RESP_SUCCESS, f"设置半自检失败，错误码: {err}"
+    
+    time.sleep(1)  # 等待自检执行
+    
+    current_level = [0]
+    err = api.HAND_GetSelfTestLevel(hand_id, current_level, [])
+    assert err == HAND_RESP_SUCCESS, f"获取自检级别失败，错误码: {err}"
+    
+    assert current_level[0] == SELF_TEST_LEVEL['半自检'], (
+        f"自检级别验证失败：期望半自检({SELF_TEST_LEVEL['半自检']})，"
+        f"实际{list(SELF_TEST_LEVEL.keys())[list(SELF_TEST_LEVEL.values()).index(current_level[0])]}({current_level[0]})"
+    )
+    logger.info("成功设置半自检")
+    
+    # 测试设置为完整自检（恢复默认状态）
+    remote_err = [0]
+    err = api.HAND_SetSelfTestLevel(hand_id, SELF_TEST_LEVEL['完整自检'], remote_err)
+    assert err == HAND_RESP_SUCCESS, f"设置完整自检失败，错误码: {err}"
+    
+    time.sleep(1)  # 等待自检执行
+    
+    err = api.HAND_GetSelfTestLevel(hand_id, current_level, [])
+    assert err == HAND_RESP_SUCCESS, f"获取自检级别失败，错误码: {err}"
+    
+    assert current_level[0] == SELF_TEST_LEVEL['完整自检'], (
+        f"自检级别验证失败：期望完整自检({SELF_TEST_LEVEL['完整自检']})，"
+        f"实际{list(SELF_TEST_LEVEL.keys())[list(SELF_TEST_LEVEL.values()).index(current_level[0])]}({current_level[0]})"
+    )
+    logger.info("成功设置完整自检")
+    
+    # 确保测试结束后恢复默认状态
+    remote_err = [0]
+    err = api.HAND_SetSelfTestLevel(hand_id, SELF_TEST_LEVEL['完整自检'], remote_err)
+    if err != HAND_RESP_SUCCESS:
+        logger.error(f"恢复默认自检级别失败，错误码: {err}")
+
+
+def test_HAND_SetBeepSwitch(api):
+    hand_id = 0x02
+    BEEP_STATUS = {
+        'OFF': 0,
+        'ON': 1
+    }
+    
+    # 测试关闭蜂鸣器
+    err = api.HAND_SetBeepSwitch(hand_id, BEEP_STATUS['OFF'], [])
+    assert err == HAND_RESP_SUCCESS, f"设置蜂鸣器关闭失败，错误码: {err}"
+    
+    time.sleep(0.5)  # 等待设备响应
+    
+    status_container = [0]
+    err = api.HAND_GetBeepSwitch(hand_id, status_container, [])
+    assert err == HAND_RESP_SUCCESS, f"获取蜂鸣器状态失败，错误码: {err}"
+    
+    actual_status = status_container[0]
+    assert actual_status == BEEP_STATUS['OFF'], (
+        f"蜂鸣器关闭状态验证失败：期望={BEEP_STATUS['OFF']}，实际={actual_status}"
+    )
+    logger.info("蜂鸣器已成功关闭")
+    
+    # 测试开启蜂鸣器
+    err = api.HAND_SetBeepSwitch(hand_id, BEEP_STATUS['ON'], [])
+    assert err == HAND_RESP_SUCCESS, f"设置蜂鸣器开启失败，错误码: {err}"
+    
+    time.sleep(0.5)  # 等待设备响应
+    
+    err = api.HAND_GetBeepSwitch(hand_id, status_container, [])
+    assert err == HAND_RESP_SUCCESS, f"获取蜂鸣器状态失败，错误码: {err}"
+    
+    actual_status = status_container[0]
+    assert actual_status == BEEP_STATUS['ON'], (
+        f"蜂鸣器开启状态验证失败：期望={BEEP_STATUS['ON']}，实际={actual_status}"
+    )
+    logger.info("蜂鸣器已成功开启")
+    
+    # 恢复默认状态
+    err = api.HAND_SetBeepSwitch(hand_id, BEEP_STATUS['ON'], [])
+    if err != HAND_RESP_SUCCESS:
+        logger.error(f"恢复蜂鸣器默认状态失败，错误码: {err}")
+    else:
+        logger.info('蜂鸣器开关已恢复默认状态')
+
+
+# def test_HAND_Beep(api): # 设置时长慧报3的错误码
 #     hand_id = 0x02
-#     self_test_level = 1
-#     remote_err = []
-
-#     err = api.HAND_SetSelfTestLevel(hand_id, self_test_level, remote_err)
-#     assert err == HAND_RESP_SUCCESS
-
-
-# def test_HAND_SetBeepSwitch(api):
-#     if api is None:
-#         pytest.skip("API 初始化失败，跳过测试")
-#     hand_id = 0x02
-#     beep_on = 1
-#     remote_err = []
-
-#     err = api.HAND_SetBeepSwitch(hand_id, beep_on, remote_err)
-#     assert err == HAND_RESP_SUCCESS
+#     duration = 500
+#     err = api.HAND_Beep(hand_id, duration, [])
+#     assert err == HAND_RESP_SUCCESS,f"设置蜂鸣器时长失败: {err}"
+#     logger.info(f'成功设置蜂鸣器时长：{duration}')
 
 
-# def test_HAND_Beep(api):
-#     if api is None:
-#         pytest.skip("API 初始化失败，跳过测试")
-#     hand_id = 0x02
-#     duration = 100
-#     remote_err = []
+def test_HAND_SetButtonPressedCnt(api):
+    hand_id = 0x02
+    
+    # 测试正常范围（0-255）
+    # 测试最小值
+    target_pressed_cnt = 0
+    remote_err = [0]
+    err = api.HAND_SetButtonPressedCnt(hand_id, target_pressed_cnt, remote_err)
+    assert err == HAND_RESP_SUCCESS, (
+        f"设置按钮按下次数失败（值={target_pressed_cnt}），错误码: {err}"
+    )
+    
+    observed_pressed_cnt = [0]
+    err = api.HAND_GetButtonPressedCnt(hand_id, observed_pressed_cnt, remote_err)
+    assert err == HAND_RESP_SUCCESS, (
+        f"获取按钮按下次数失败（值={target_pressed_cnt}），错误码: {err}"
+    )
+    
+    actual_cnt = observed_pressed_cnt[0]
+    assert actual_cnt == target_pressed_cnt, (
+        f"按钮按下次数验证失败：目标值={target_pressed_cnt}，实际值={actual_cnt}"
+    )
+    
+    logger.info(f"按钮按下次数设置成功，值={target_pressed_cnt}")
+    
+    # 测试中间值
+    target_pressed_cnt = 128
+    remote_err = [0]
+    err = api.HAND_SetButtonPressedCnt(hand_id, target_pressed_cnt, remote_err)
+    assert err == HAND_RESP_SUCCESS, (
+        f"设置按钮按下次数失败（值={target_pressed_cnt}），错误码: {err}"
+    )
+    
+    observed_pressed_cnt = [0]
+    err = api.HAND_GetButtonPressedCnt(hand_id, observed_pressed_cnt, remote_err)
+    assert err == HAND_RESP_SUCCESS, (
+        f"获取按钮按下次数失败（值={target_pressed_cnt}），错误码: {err}"
+    )
+    
+    actual_cnt = observed_pressed_cnt[0]
+    assert actual_cnt == target_pressed_cnt, (
+        f"按钮按下次数验证失败：目标值={target_pressed_cnt}，实际值={actual_cnt}"
+    )
+    
+    logger.info(f"按钮按下次数设置成功，值={target_pressed_cnt}")
+    
+    # 测试最大值
+    target_pressed_cnt = 255
+    remote_err = [0]
+    err = api.HAND_SetButtonPressedCnt(hand_id, target_pressed_cnt, remote_err)
+    assert err == HAND_RESP_SUCCESS, (
+        f"设置按钮按下次数失败（值={target_pressed_cnt}），错误码: {err}"
+    )
+    
+    observed_pressed_cnt = [0]
+    err = api.HAND_GetButtonPressedCnt(hand_id, observed_pressed_cnt, remote_err)
+    assert err == HAND_RESP_SUCCESS, (
+        f"获取按钮按下次数失败（值={target_pressed_cnt}），错误码: {err}"
+    )
+    
+    actual_cnt = observed_pressed_cnt[0]
+    assert actual_cnt == target_pressed_cnt, (
+        f"按钮按下次数验证失败：目标值={target_pressed_cnt}，实际值={actual_cnt}"
+    )
+    
+    logger.info(f"按钮按下次数设置成功，值={target_pressed_cnt}")
+    
+    # 测试超出范围（256-65535） - 期望触发ValueError
+    # 测试超出范围的最小值（256）
+    try:
+        api.HAND_SetButtonPressedCnt(hand_id, 256, [0])
+    except ValueError as e:
+        logger.info(f"成功捕获预期的ValueError（值=256）: {str(e)}")
+    else:
+        assert False, "设置超出范围的值（256）未触发ValueError"
+    
+    # 测试中间值（32768）
+    try:
+        api.HAND_SetButtonPressedCnt(hand_id, 32768, [0])
+    except ValueError as e:
+        logger.info(f"成功捕获预期的ValueError（值=32768）: {str(e)}")
+    else:
+        assert False, "设置超出范围的值（32768）未触发ValueError"
+    
+    # 测试超出范围的最大值（65535）
+    try:
+        api.HAND_SetButtonPressedCnt(hand_id, 65535, [0])
+    except ValueError as e:
+        logger.info(f"成功捕获预期的ValueError（值=65535）: {str(e)}")
+    else:
+        assert False, "设置超出范围的值（65535）未触发ValueError"
+    
+    # 测试负数（-1）
+    try:
+        api.HAND_SetButtonPressedCnt(hand_id, -1, [0])
+    except ValueError as e:
+        logger.info(f"成功捕获预期的ValueError（值=-1）: {str(e)}")
+    else:
+        assert False, "设置负数（-1）未触发ValueError"
 
-#     err = api.HAND_Beep(hand_id, duration, remote_err)
-#     assert err == HAND_RESP_SUCCESS
-
-
-# def test_HAND_SetButtonPressedCnt(api):
-#     if api is None:
-#         pytest.skip("API 初始化失败，跳过测试")
-#     hand_id = 0x02
-#     pressed_cnt = 10
-#     remote_err = []
-
-#     err = api.HAND_SetButtonPressedCnt(hand_id, pressed_cnt, remote_err)
-#     assert err == HAND_RESP_SUCCESS
-
-
-# def test_HAND_StartInit(api):
-#     if api is None:
-#         pytest.skip("API 初始化失败，跳过测试")
-#     hand_id = 0x02
-#     remote_err = []
-
-#     err = api.HAND_StartInit(hand_id, remote_err)
-#     assert err == HAND_RESP_SUCCESS
+def test_HAND_StartInit(api):
+    hand_id = 0x02
+    remote_err = []
+    err = api.HAND_StartInit(hand_id, remote_err)
+    assert err == HAND_RESP_SUCCESS,f"初始化手失败，错误码: {err}"
+    logger.info(f'手初始化成功')
