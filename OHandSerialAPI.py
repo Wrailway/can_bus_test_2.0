@@ -941,7 +941,7 @@ class OHandSerialAPI:
     def HAND_ResetForce(self, hand_id, remote_err):
         err = self.HAND_SendCmd(hand_id, HAND_CMD_RESET_FORCE, None, 0)
         if err == HAND_RESP_SUCCESS:
-            err = self.HAND_GetResponse(hand_id, HAND_CMD_RESET_FORCE, self.timeout, remote_err)
+            err = self.HAND_GetResponse(hand_id, HAND_CMD_RESET_FORCE, self.timeout, None, remote_err)
         return err
 
     def HAND_SetCustom(self, hand_id, data, send_data_size, recv_data_size, remote_err):
@@ -1022,7 +1022,7 @@ def main():
         api.HAND_SetTimerFunction(can_comm.get_milli_seconds_impl, can_comm.delay_milli_seconds_impl)
 
         # 设置命令超时时间（毫秒）
-        api.HAND_SetCommandTimeOut(255)
+        api.HAND_SetCommandTimeOut(500)
 
         # 准备参数
         hand_id = 0x02  # 目标手的ID
