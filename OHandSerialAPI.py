@@ -846,7 +846,7 @@ class OHandSerialAPI:
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_ANGLE, self.timeout, None, remote_err)
         return err
-
+    
     def HAND_SetThumbRootPos(self, hand_id, pos, speed, remote_err):
         data = bytearray(2)
         data[0] = pos

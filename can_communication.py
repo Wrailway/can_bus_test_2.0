@@ -34,6 +34,7 @@ def send_data_impl(addr, data, length, private_data):
             for byte in data[i:i+current_size]:
                 print(f"{byte:02X} ", end='')
             print()
+            time.sleep(0.02)  # 20ms延迟，根据设备响应能力调整
         return 0
     except can.CanError as e:
         print(f"CAN发送失败，错误: {e}")
@@ -41,6 +42,44 @@ def send_data_impl(addr, data, length, private_data):
     except Exception as e:
         print(f"发送异常: {e}")
         return 1
+
+# def send_data_impl(addr, data, length, private_data):
+#     """分帧发送数据，添加帧间延迟"""
+#     if not private_data or not hasattr(private_data, 'send'):
+#         print("错误：CAN总线未正确初始化")
+#         return 1
+        
+#     try:
+#         # 分帧发送
+#         for i in range(0, length, 8):
+#             current_size = min(8, length - i)
+#             frame_data = data[i:i+current_size]
+            
+#             # 创建CAN消息
+#             msg = can.Message(
+#                 arbitration_id=addr,
+#                 data=frame_data,
+#                 is_extended_id=False
+#             )
+            
+#             # 发送消息
+#             private_data.send(msg)
+#             print(f"发送帧 {i//8+1}: ID=0x{addr:03X}, LEN={current_size}, DATA=", end='')
+#             for byte in frame_data:
+#                 print(f"{byte:02X} ", end='')
+#             print()
+            
+#             # 添加帧间延迟（关键！）
+#             time.sleep(0.02)  # 20ms延迟，根据设备响应能力调整
+            
+#         return 0
+#     except can.CanError as e:
+#         print(f"CAN发送失败，错误: {e}")
+#         return 1
+#     except Exception as e:
+#         print(f"发送异常: {e}")
+#         return 1
+    
 
 # 接收数据函数（与OHandSerialAPI接口匹配）
 def recv_data_impl(private_data):
@@ -54,7 +93,7 @@ def recv_data_impl(private_data):
         
     try:
         # 非阻塞接收（超时0.001秒）
-        msg = private_data.recv(timeout=0.001)
+        msg = private_data.recv(timeout=1)
         if msg is not None:
             # 打印接收到的CAN帧信息
             print(f"接收帧: ID=0x{msg.arbitration_id:03X}, LEN={msg.dlc}, DATA=", end='')
