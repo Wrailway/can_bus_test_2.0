@@ -70,7 +70,7 @@ def api():
             except Exception as e:
                 logger.error(f"Error closing CAN bus: {e}")
 
-# # --------------------------- GET 命令测试 ---------------------------
+# --------------------------- GET 命令测试 ---------------------------
 def test_HAND_GetProtocolVersion(api):
     hand_id = 0x02
     major, minor = [0], [0]
@@ -313,18 +313,173 @@ def test_HAND_PowerOff(api):
     assert err == HAND_RESP_SUCCESS,f"设置关机失败: err={err},remote_err={remote_err}"
     logger.info('设置关机成功成功')
 
-@pytest.mark.skip('先跳过设备ID的修改')
-def test_HAND_SetID(api):
-    hand_id = 0x02
-    new_id = 0x02
-    verify_sets = [
-            3
-        ]
-    remote_err = []
 
-    err, remote_err = api.HAND_SetID(hand_id, new_id, remote_err)
-    assert err == HAND_RESP_SUCCESS,f"设置设备ID失败: err={err},remote_err={remote_err}"
-    logger.info(f'设置设备ID成功{new_id}')
+@pytest.mark.skip('先跳过设备ID的修改')  
+def test_HAND_SetID(api):
+    """测试设置设备ID功能（适配API实际方法，移除HAND_GetID依赖）"""
+    original_hand_id = 0x02  # 初始默认ID
+    test_results = []
+    
+    # 保存原始API的私有数据用于重建连接
+    private_data = api.get_private_data() if hasattr(api, 'get_private_data') else None
+    print('111')
+    try:
+        # 定义测试数据（ID范围：2-247为有效）
+        test_cases = [
+            (3,     "hand id最小值2（有效）"),
+            (125,   "hand id中间值125（有效）"),
+            (247,   "hand id最大值247（有效）"),
+            (1,     "hand id边界值1（无效）"),
+            (0,     "hand id边界值0（无效）"),
+            (-1,    "hand id边界值-1（无效）"),
+            (248,   "hand id边界值248（无效）"),
+            (256,   "hand id边界值256（无效）"),
+        ]
+        
+        for new_id, desc in test_cases:
+            logger.info(f"\n----- 测试 {desc} -----")
+            remote_err = []
+            
+            # 发送设置ID命令（使用API中实际存在的HAND_SetNodeID对应方法）
+            set_err, set_remote_err = api.HAND_SetID(original_hand_id, new_id, remote_err)
+            print('2222')
+            # 处理有效ID（2-247）
+            if 3 <= new_id <= 247:
+                # 验证设置命令是否成功
+                assert set_err == HAND_RESP_SUCCESS, \
+                    f"有效ID设置命令失败: {desc}, 错误码: {set_err}, 远程错误: {set_remote_err}"
+                print('333')
+                # 设备重启等待（根据实际重启时间调整）
+                logger.info(f"等待设备重启（新ID: {new_id}）...")
+                time.sleep(5)
+                print('4444')
+                # 关闭当前连接
+                if hasattr(api, 'shutdown'):
+                    api.shutdown()
+                CAN_Shutdown(private_data)
+                print('555')
+                # 重建连接（使用新ID）并验证是否能通信
+                new_private_data = CAN_Init(port_name="1", baudrate=1000000)
+                assert new_private_data is not None, "CAN总线初始化失败"
+                print('666')
+                # 创建新API实例（使用新ID）
+                new_api = OHandSerialAPI(
+                    private_data=new_private_data,
+                    protocol=0,  # HAND_PROTOCOL_UART
+                    address_master=new_id,
+                    send_data_impl=send_data_impl,
+                    recv_data_impl=recv_data_impl
+                )
+                new_api.HAND_SetTimerFunction(get_milli_seconds_impl, delay_milli_seconds_impl)
+                new_api.HAND_SetCommandTimeOut(255)
+                
+                # 间接验证新ID生效：通过查询其他基础信息（如协议版本）判断连接有效性
+                major, minor = [0], [0]
+                verify_err, _ = new_api.HAND_GetProtocolVersion(new_id, major, minor, [])
+                assert verify_err == HAND_RESP_SUCCESS, \
+                    f"新ID {new_id} 通信失败，验证协议版本错误: {verify_err}"
+                
+                test_results.append((f"ID测试({desc})", "通过"))
+                logger.info(f"新ID {new_id} 验证成功（通信正常）")
+                
+                # 恢复原始ID
+                recover_err, _ = new_api.HAND_SetID(new_id, original_hand_id, [])
+                assert recover_err == HAND_RESP_SUCCESS, \
+                    f"恢复原始ID命令失败，错误码: {recover_err}"
+                
+                # 等待恢复后重启
+                logger.info(f"等待设备恢复原始ID {original_hand_id}...")
+                time.sleep(5)
+                
+                # 关闭当前连接
+                if hasattr(new_api, 'shutdown'):
+                    new_api.shutdown()
+                CAN_Shutdown(new_private_data)
+                
+                # 重建原始ID连接
+                private_data = CAN_Init(port_name="1", baudrate=1000000)
+                assert private_data is not None, "CAN总线初始化失败"
+                
+                api = OHandSerialAPI(
+                    private_data=private_data,
+                    protocol=0,
+                    address_master=original_hand_id,
+                    send_data_impl=send_data_impl,
+                    recv_data_impl=recv_data_impl
+                )
+                api.HAND_SetTimerFunction(get_milli_seconds_impl, delay_milli_seconds_impl)
+                api.HAND_SetCommandTimeOut(255)
+                
+                # 验证原始ID恢复：查询协议版本判断连接
+                major, minor = [0], [0]
+                recover_verify_err, _ = api.HAND_GetProtocolVersion(original_hand_id, major, minor, [])
+                assert recover_verify_err == HAND_RESP_SUCCESS, \
+                    f"原始ID {original_hand_id} 恢复失败，通信错误: {recover_verify_err}"
+                logger.info(f"原始ID {original_hand_id} 恢复成功（通信正常）")
+            
+            # 处理无效ID（超出2-247范围）
+            else:
+                # 验证设置命令是否被拒绝
+                assert set_err != HAND_RESP_SUCCESS, \
+                    f"无效ID设置未被拒绝: {desc}, 错误码: {set_err}, 远程错误: {set_remote_err}"
+                
+                # 验证原始ID仍能通信（未被修改）
+                major, minor = [0], [0]
+                check_err, _ = api.HAND_GetProtocolVersion(original_hand_id, major, minor, [])
+                assert check_err == HAND_RESP_SUCCESS, \
+                    f"无效ID设置后原始ID通信失败，错误码: {check_err}"
+                
+                test_results.append((f"ID测试({desc})", "通过（预期失败）"))
+    
+    except AssertionError as e:
+        logger.error(f"测试断言失败: {str(e)}")
+        test_results.append(("全局断言", f"失败: {str(e)}"))
+        raise
+    except Exception as e:
+        logger.error(f"测试异常: {str(e)}")
+        test_results.append(("全局异常", f"失败: {str(e)}"))
+        raise
+    finally:
+        # 最终确保设备恢复为原始ID并验证
+        try:
+            logger.info("\n----- 最终恢复原始ID -----")
+            if hasattr(api, 'shutdown'):
+                api.shutdown()
+            CAN_Shutdown(private_data)
+            
+            # 重建原始ID连接
+            private_data = CAN_Init(port_name="1", baudrate=1000000)
+            api = OHandSerialAPI(
+                private_data=private_data,
+                protocol=0,
+                address_master=original_hand_id,
+                send_data_impl=send_data_impl,
+                recv_data_impl=recv_data_impl
+            )
+            api.HAND_SetTimerFunction(get_milli_seconds_impl, delay_milli_seconds_impl)
+            
+            # 恢复原始ID命令
+            final_err, _ = api.HAND_SetID(original_hand_id, original_hand_id, [])
+            time.sleep(3)
+            
+            # 验证最终状态
+            major, minor = [0], [0]
+            final_verify_err, _ = api.HAND_GetProtocolVersion(original_hand_id, major, minor, [])
+            if final_verify_err == HAND_RESP_SUCCESS:
+                logger.info(f"最终恢复原始ID {original_hand_id} 成功（通信正常）")
+            else:
+                logger.warning(f"最终恢复原始ID失败，通信错误: {final_verify_err}")
+        except Exception as e:
+            logger.error(f"最终恢复原始ID异常: {str(e)}")
+        
+        # 测试结果汇总
+        logger.info("\n===== 设置设备ID测试结果汇总 =====")
+        passed = sum(1 for case, result in test_results if "通过" in result)
+        total = len(test_results)
+        logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
+        for case, result in test_results:
+            logger.info(f"{case}: {result}")
+        logger.info("=======================")
             
 # @pytest.mark.skip('测试设置pid一直报超时，此case暂时跳过')
 def test_HAND_SetFingerPID(api):
@@ -1862,7 +2017,7 @@ def test_HAND_SetSelfTestLevel(api):
     err,remote_err = api.HAND_SetSelfTestLevel(hand_id, SELF_TEST_LEVEL['半自检'], remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置半自检失败，错误码: err={err},remote_err={remote_err}"
     
-    time.sleep(1)  # 等待自检执行
+    time.sleep(5)  # 等待自检执行
     
     current_level = [0]
     err,remote_err = api.HAND_GetSelfTestLevel(hand_id, current_level, [])
@@ -1879,7 +2034,7 @@ def test_HAND_SetSelfTestLevel(api):
     err, remote_err = api.HAND_SetSelfTestLevel(hand_id, SELF_TEST_LEVEL['完整自检'], remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置完整自检失败，错误码: err={err},remote_err={remote_err}"
     
-    time.sleep(1)  # 等待自检执行
+    time.sleep(5)  # 等待自检执行
     
     err,remote_err = api.HAND_GetSelfTestLevel(hand_id, current_level, [])
     assert err == HAND_RESP_SUCCESS, f"获取自检级别失败，错误码:err={err},remote_err={remote_err}"
