@@ -1,5 +1,6 @@
+import struct
 import time
-
+from typing import Any
 
 MAX_MOTOR_CNT = 6
 MAX_THUMB_ROOT_POS = 3
@@ -67,12 +68,14 @@ HAND_CMD_GET_FINGER_STOP_PARAMS = 0x11  # Get finger finger stop parametres
 HAND_CMD_GET_FINGER_FORCE_PID = 0x12  # Get finger force PID
 
 # Auxiliary GET commands
-HAND_CMD_GET_SELF_TEST_LEVEL = 0x20  # Get self-test_can level state
+HAND_CMD_GET_SELF_TEST_LEVEL = 0x20  # Get self-test level state
 HAND_CMD_GET_BEEP_SWITCH = 0x21  # Get beep switch state
 HAND_CMD_GET_BUTTON_PRESSED_CNT = 0x22  # Get button press count
 HAND_CMD_GET_UID = 0x23  # Get 96 bits UID
 HAND_CMD_GET_BATTERY_VOLTAGE = 0x24  # Get battery voltage
 HAND_CMD_GET_USAGE_STAT = 0x25  # Get usage stat
+HAND_CMD_GET_SPEED_CTRL_PARAMS = 0x3D  # Get speed control parameters
+HAND_CMD_GET_MANUFACTURE_DATA = 0x3E    # Get manufacture data
 
 # Chief SET commands
 HAND_CMD_RESET = 0x40  # Please don't modify
@@ -100,12 +103,13 @@ HAND_CMD_RESET_FORCE = 0x54  # Reset force
 HAND_CMD_SET_CUSTOM = 0x5F  # Custom set command
 
 # Auxiliary SET commands
-HAND_CMD_SET_SELF_TEST_LEVEL = 0x60  # Set self-test_can level, level, 0: wait command, 1: semi self-test_can, 2: full self-test_can
+HAND_CMD_SET_SELF_TEST_LEVEL = 0x60  # Set self-test level, level, 0: wait command, 1: semi self-test, 2: full self-test
 HAND_CMD_SET_BEEP_SWITCH = 0x61  # Set beep ON/OFF
 HAND_CMD_BEEP = 0x62  # Beep for duration if beep switch is on
 HAND_CMD_SET_BUTTON_PRESSED_CNT = 0x63  # Set button press count, for ROH calibration only
 HAND_CMD_START_INIT = 0x64  # Start init in case of SELF_TEST_LEVEL=0
-
+HAND_CMD_SET_MANUFACTURE_DATA  = 0x65  # Set manufacture data
+HAND_CMD_SET_SPEED_CTRL_PARAMS = 0x66 # Set speed control parameters
 CMD_ERROR_MASK = 1 << 7  # bit mask for command error
 
 MAX_PROTOCOL_DATA_SIZE = 64
@@ -183,7 +187,7 @@ class OHandSerialAPI:
             time.sleep(0.001)  # Delay 1ms
 
             if self.recv_data_impl:
-                self.recv_data_impl(self.private_data)
+                self.recv_data_impl(self.private_data, self)
 
             if self._get_milli_seconds_impl() > wait_timeout:
                 self.decode_state = self._initial_state()
@@ -197,8 +201,8 @@ class OHandSerialAPI:
 
         # Check if response is error
         if (self.packet_data[2] & CMD_ERROR_MASK) != 0:
-            if remote_err:
-                remote_err.append(self.packet_data[5])
+            if remote_err is not None:
+                remote_err.append(self.packet_data[4])
             return HAND_RESP_HAND_ERROR
 
         if self.packet_data[1] != addr and addr != 0xFF:
@@ -285,7 +289,7 @@ class OHandSerialAPI:
             if err == HAND_RESP_SUCCESS:
                 minor[0] = out[0]
                 major[0] = out[1]
-        return err, remote_err
+        return err, major[0], minor[0]
 
     def HAND_GetFirmwareVersion(self, hand_id, major, minor, revision, remote_err):
         out = bytearray(4)  # Assuming revision is 2 bytes, and major/minor are 1 byte each
@@ -297,7 +301,7 @@ class OHandSerialAPI:
                 revision[0] = out[0] | (out[1] << 8)
                 minor[0] = out[2]
                 major[0] = out[3]
-        return err, remote_err
+        return err, major[0], minor[0], revision[0]
 
     def HAND_GetHardwareVersion(self, hand_id, hw_type, hw_ver, boot_version, remote_err):
         out = bytearray(4)  # Assuming boot_version is 2 bytes, and hw_type/hw_ver are 1 byte each
@@ -309,7 +313,7 @@ class OHandSerialAPI:
                 hw_type[0] = out[0]
                 hw_ver[0] = out[1]
                 boot_version[0] = (out[2] << 8) | out[3]
-        return err, remote_err
+        return err, hw_type[0], hw_ver[0], boot_version[0]
 
     def HAND_GetCaliData(self, hand_id, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, remote_err):
         out = bytearray(2 + 2 * MAX_MOTOR_CNT + 2 * MAX_MOTOR_CNT + 1 + 2 * MAX_THUMB_ROOT_POS)
@@ -342,7 +346,7 @@ class OHandSerialAPI:
                     for i in range(thumb_root_pos_cnt_ret):
                         thumb_root_pos[i] = next(p_data) | (next(p_data) << 8)
 
-        return err, remote_err
+        return err, end_pos, start_pos, thumb_root_pos
 
     def HAND_GetFingerPID(self, hand_id, finger_id, p, i, d, g, remote_err):
         data = bytearray(1)
@@ -353,13 +357,13 @@ class OHandSerialAPI:
             byte_count = len(out)
             err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_FINGER_PID, self.timeout, out, remote_err)
             if err == HAND_RESP_SUCCESS and out[0] == finger_id:
-                p[0] = int.from_bytes(out[1:5], byteorder="little")
-                i[0] = int.from_bytes(out[5:9], byteorder="little")
-                d[0] = int.from_bytes(out[9:13], byteorder="little")
-                g[0] = int.from_bytes(out[13:17], byteorder="little")
+                p[0] = struct.unpack('f', out[1:5])
+                i[0] = struct.unpack('f', out[5:9])
+                d[0] = struct.unpack('f', out[9:13])
+                g[0] = struct.unpack('f', out[13:17])
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, p[0][0], i[0][0], d[0][0], g[0][0]
 
     def HAND_GetFingerCurrentLimit(self, hand_id, finger_id, current_limit, remote_err):
         data = bytearray(1)
@@ -373,7 +377,7 @@ class OHandSerialAPI:
                 current_limit[0] = out[1] | (out[2] << 8)
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, current_limit[0]
 
     def HAND_GetFingerCurrent(self, hand_id, finger_id, current, remote_err):
         data = bytearray(1)
@@ -387,7 +391,7 @@ class OHandSerialAPI:
                 current[0] = out[1] | (out[2] << 8)
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, current[0]
 
     def HAND_GetFingerForceTarget(self, hand_id, finger_id, force_target, remote_err):
         data = bytearray(1)
@@ -401,7 +405,7 @@ class OHandSerialAPI:
                 force_target[0] = out[1] | (out[2] << 8)
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, force_target[0]
 
     def HAND_GetFingerForce(self, hand_id, finger_id, force_entry_cnt, force, remote_err):
         data = bytearray(1)
@@ -419,7 +423,7 @@ class OHandSerialAPI:
                     for i in range(force_entry_cnt[0]):
                         if i < len(force):
                             force[i] = out[2 + i]
-        return err, remote_err
+        return err, force
 
     def HAND_GetFingerPosLimit(self, hand_id, finger_id, low_limit, high_limit, remote_err):
         data = bytearray(1)
@@ -434,7 +438,7 @@ class OHandSerialAPI:
                 high_limit[0] = out[3] | (out[4] << 8)
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, low_limit[0], high_limit[0]
 
     def HAND_GetFingerPosAbs(self, hand_id, finger_id, target_pos, current_pos, remote_err):
         data = bytearray(1)
@@ -451,7 +455,7 @@ class OHandSerialAPI:
                     current_pos[0] = out[3] | (out[4] << 8)
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, target_pos[0], current_pos[0]
 
     def HAND_GetFingerPos(self, hand_id, finger_id, target_pos, current_pos, remote_err):
         data = bytearray(1)
@@ -468,7 +472,7 @@ class OHandSerialAPI:
                     current_pos[0] = out[3] | (out[4] << 8)
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, target_pos[0], current_pos[0]
 
     def HAND_GetFingerAngle(self, hand_id, finger_id, target_angle, current_angle, remote_err):
         data = bytearray(1)
@@ -485,7 +489,7 @@ class OHandSerialAPI:
                     current_angle[0] = int.from_bytes(out[3:5], byteorder="little", signed=True)
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, target_angle[0], current_angle[0]
 
     def HAND_GetThumbRootPos(self, hand_id, raw_encoder, pos, remote_err):
         out = bytearray(3)
@@ -496,7 +500,7 @@ class OHandSerialAPI:
             if err == HAND_RESP_SUCCESS:
                 raw_encoder[0] = out[0] | (out[1] << 8)
                 pos[0] = out[2]
-        return err, remote_err
+        return err, raw_encoder[0], pos[0]
 
     def HAND_GetFingerPosAbsAll(self, hand_id, target_pos, current_pos, motor_cnt, remote_err):
         out = bytearray(2 * MAX_MOTOR_CNT * 2)
@@ -515,7 +519,7 @@ class OHandSerialAPI:
                 if current_pos:
                     for i in range(motor_cnt_ret):
                         current_pos[i] = out[2 * motor_cnt_ret + 2 * i] | (out[2 * motor_cnt_ret + 2 * i + 1] << 8)
-        return err, remote_err
+        return err, target_pos, current_pos
 
     def HAND_GetFingerPosAll(self, hand_id, target_pos, current_pos, motor_cnt, remote_err):
         out = bytearray(2 * MAX_MOTOR_CNT * 2)
@@ -534,7 +538,7 @@ class OHandSerialAPI:
                 if current_pos:
                     for i in range(motor_cnt_ret):
                         current_pos[i] = out[2 * motor_cnt_ret + 2 * i] | (out[2 * motor_cnt_ret + 2 * i + 1] << 8)
-        return err, remote_err
+        return err, target_pos, current_pos
 
     def HAND_GetFingerAngleAll(self, hand_id, target_angle, current_angle, motor_cnt, remote_err):
         out = bytearray(2 * MAX_MOTOR_CNT * 2)
@@ -555,15 +559,14 @@ class OHandSerialAPI:
                         current_angle[i] = int.from_bytes(
                             out[2 * motor_cnt_ret + 2 * i : 2 * motor_cnt_ret + 2 * i + 2], byteorder="little", signed=True
                         )
-        return err, remote_err
+        return err, target_angle, current_angle
 
     def HAND_GetFingerStopParams(self, hand_id, finger_id, speed, stop_current, stop_after_period, retry_interval, remote_err):
         data = bytearray(1)
         data[0] = finger_id
-        out = bytearray(5)  # Assuming 4 bytes of stop params
+        out = bytearray(9)  # Assuming 4 bytes of stop params
         err = self.HAND_SendCmd(hand_id, HAND_CMD_GET_FINGER_STOP_PARAMS, data, len(data))
         if err == HAND_RESP_SUCCESS:
-            byte_count = len(out)
             err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_FINGER_STOP_PARAMS, self.timeout, out, remote_err)
             if err == HAND_RESP_SUCCESS and out[0] == finger_id:
                 speed[0] = out[1] | (out[2] << 8)
@@ -572,7 +575,7 @@ class OHandSerialAPI:
                 retry_interval[0] = out[7] | (out[8] << 8)
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, speed[0], stop_current[0], stop_after_period[0], retry_interval[0]
 
     def HAND_GetFingerForcePID(self, hand_id, finger_id, p, i, d, g, remote_err):
         data = bytearray(1)
@@ -580,16 +583,15 @@ class OHandSerialAPI:
         out = bytearray(1 + 4 + 4 + 4 + 4)  # Assuming float is 4 bytes
         err = self.HAND_SendCmd(hand_id, HAND_CMD_GET_FINGER_FORCE_PID, data, len(data))
         if err == HAND_RESP_SUCCESS:
-            byte_count = len(out)
             err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_FINGER_FORCE_PID, self.timeout, out, remote_err)
             if err == HAND_RESP_SUCCESS and out[0] == finger_id:
-                p[0] = int.from_bytes(out[1:5], byteorder="little")
-                i[0] = int.from_bytes(out[5:9], byteorder="little")
-                d[0] = int.from_bytes(out[9:13], byteorder="little")
-                g[0] = int.from_bytes(out[13:17], byteorder="little")
+                p[0] = struct.unpack('f', out[1:5])
+                i[0] = struct.unpack('f', out[5:9])
+                d[0] = struct.unpack('f', out[9:13])
+                g[0] = struct.unpack('f', out[13:17])
             else:
                 err = HAND_RESP_DATA_INVALID
-        return err, remote_err
+        return err, p[0][0], i[0][0], d[0][0], g[0][0]
 
     def HAND_GetSelfTestLevel(self, hand_id, self_test_level, remote_err):
         out = bytearray(1)
@@ -599,7 +601,7 @@ class OHandSerialAPI:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_SELF_TEST_LEVEL, self.timeout, out, remote_err)
             if err == HAND_RESP_SUCCESS:
                 self_test_level[0] = out[0]
-        return err, remote_err
+        return err, self_test_level[0]
 
     def HAND_GetBeepSwitch(self, hand_id, beep_switch, remote_err):
         out = bytearray(1)
@@ -609,7 +611,7 @@ class OHandSerialAPI:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_BEEP_SWITCH, self.timeout, out, remote_err)
             if err == HAND_RESP_SUCCESS:
                 beep_switch[0] = out[0]
-        return err, remote_err
+        return err, beep_switch[0]
 
     def HAND_GetButtonPressedCnt(self, hand_id, pressed_cnt, remote_err):
         out = bytearray(1)
@@ -619,7 +621,7 @@ class OHandSerialAPI:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_BUTTON_PRESSED_CNT, self.timeout, out, remote_err)
             if err == HAND_RESP_SUCCESS:
                 pressed_cnt[0] = out[0]
-        return err, remote_err
+        return err, pressed_cnt[0]
 
     def HAND_GetUID(self, hand_id, uid_w0, uid_w1, uid_w2, remote_err):
         out = bytearray(12)  # 96 bits UID
@@ -631,7 +633,7 @@ class OHandSerialAPI:
                 uid_w0[0] = out[0] | (out[1] << 8) | (out[2] << 16) | (out[3] << 24)
                 uid_w1[0] = out[4] | (out[5] << 8) | (out[6] << 16) | (out[7] << 24)
                 uid_w2[0] = out[8] | (out[9] << 8) | (out[10] << 16) | (out[11] << 24)
-        return err, remote_err
+        return err, uid_w0[0], uid_w1[0], uid_w2[0]
 
     def HAND_GetBatteryVoltage(self, hand_id, voltage, remote_err):
         out = bytearray(2)
@@ -641,7 +643,7 @@ class OHandSerialAPI:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_BATTERY_VOLTAGE, self.timeout, out, remote_err)
             if err == HAND_RESP_SUCCESS:
                 voltage[0] = out[0] | (out[1] << 8)
-        return err, remote_err
+        return err
 
     def HAND_GetUsageStat(self, hand_id, total_use_time, total_open_times, motor_cnt, remote_err):
         data = bytearray(1)
@@ -656,7 +658,43 @@ class OHandSerialAPI:
                 for i in range(MAX_MOTOR_CNT):
                     index = 4 + i * 4
                     total_open_times[i] = out[index] | (out[index + 1] << 8) | (out[index + 2] << 16) | (out[index + 3] << 24)
-        return err, remote_err
+        return err
+
+    def HAND_GetManufactureData(self, hand_id, sub_model, hw_revision, serial_number, customer_tag, remote_err):
+        out = bytearray(26)
+        err = self.HAND_SendCmd(hand_id, HAND_CMD_GET_MANUFACTURE_DATA, None, 0)
+        if err == HAND_RESP_SUCCESS:
+            err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_MANUFACTURE_DATA, self.timeout, out, remote_err)
+            if err == HAND_RESP_SUCCESS:
+                sub_model[0] = out[0]
+                hw_revision[0] = out[1]
+                serial_bytes = out[2:18]
+                customer_bytes = out[18:26]
+
+                serial_numbers = [int(byte) for byte in serial_bytes]
+                serial_number_str = ''.join(map(str, serial_numbers))
+                serial_number[0] = serial_number_str
+
+                customer_numbers = [int(byte) for byte in customer_bytes]
+                customer_numbers_str = ''.join(map(str, customer_numbers))
+                customer_tag[0] = customer_numbers_str
+            else:
+                err = HAND_RESP_DATA_INVALID
+        return err, sub_model[0], hw_revision[0], serial_number[0], customer_tag[0]
+
+    def HAND_GetFingerSpeedCtrlParams(self, hand_id, brake_distance, accel_distance, speed_ratio, remote_err):
+        out = bytearray(2 + 2 + 4)
+        err = self.HAND_SendCmd(hand_id, HAND_CMD_GET_SPEED_CTRL_PARAMS, None, 0)
+        if err == HAND_RESP_SUCCESS:
+            err = self.HAND_GetResponse(hand_id, HAND_CMD_GET_SPEED_CTRL_PARAMS, self.timeout, out, remote_err)
+            if err == HAND_RESP_SUCCESS:
+                brake_distance[0] = out[0] | (out[1] << 8)
+                accel_distance[0] = out[2] | (out[3] << 8)
+                speed_ratio[0] = struct.unpack('f', out[4:8])
+            else:
+                err = HAND_RESP_DATA_INVALID
+
+        return err, brake_distance[0], accel_distance[0], speed_ratio[0][0]
 
     def HAND_Reset(self, hand_id, mode, remote_err):
         data = bytearray(1)
@@ -664,13 +702,13 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_RESET, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_RESET, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_PowerOff(self, hand_id, remote_err):
         err = self.HAND_SendCmd(hand_id, HAND_CMD_POWER_OFF, None, 0)
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_POWER_OFF, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetID(self, hand_id, new_id, remote_err):
         data = bytearray(1)
@@ -678,7 +716,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_NODE_ID, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_NODE_ID, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_Calibrate(self, hand_id, key, remote_err):
         data = bytearray(2)
@@ -721,15 +759,15 @@ class OHandSerialAPI:
     def HAND_SetFingerPID(self, hand_id, finger_id, p, i, d, g, remote_err):
         data = bytearray(1 + 4 + 4 + 4 + 4)
         data[0] = finger_id
-        data[1:5] = p.to_bytes(4, byteorder="little")
-        data[5:9] = i.to_bytes(4, byteorder="little")
-        data[9:13] = d.to_bytes(4, byteorder="little")
-        data[13:17] = g.to_bytes(4, byteorder="little")
+        data[1:5] =   struct.pack('f', p)
+        data[5:9] =   struct.pack('f', i)
+        data[9:13] =  struct.pack('f', d)
+        data[13:17] = struct.pack('f', g)
 
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_PID, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_PID, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerCurrentLimit(self, hand_id, finger_id, current_limit, remote_err):
         data = bytearray(3)
@@ -740,7 +778,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_CURRENT_LIMIT, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_CURRENT_LIMIT, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerForceTarget(self, hand_id, finger_id, force_limit, remote_err):
         data = bytearray(3)
@@ -751,20 +789,20 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_FORCE_TARGET, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_FORCE_TARGET, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerPosLimit(self, hand_id, finger_id, pos_limit_low, pos_limit_high, remote_err):
-        data = bytearray(3)
+        data = bytearray(5)
         data[0] = finger_id
         data[1] = pos_limit_low & 0xFF
         data[2] = (pos_limit_low >> 8) & 0xFF
-        data[1] = pos_limit_high & 0xFF
-        data[2] = (pos_limit_high >> 8) & 0xFF
+        data[3] = pos_limit_high & 0xFF
+        data[4] = (pos_limit_high >> 8) & 0xFF
 
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_POS_LIMIT, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_POS_LIMIT, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_FingerStart(self, hand_id, finger_id_bits, remote_err):
         data = bytearray(1)
@@ -773,7 +811,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_FINGER_START, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_FINGER_START, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_FingerStop(self, hand_id, finger_id_bits, remote_err):
         data = bytearray(1)
@@ -782,7 +820,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_FINGER_STOP, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_FINGER_STOP, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerPosAbs(self, hand_id, finger_id, raw_pos, speed, remote_err):
         data = bytearray(4)
@@ -794,7 +832,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_POS_ABS, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_POS_ABS, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerPos(self, hand_id, finger_id, pos, speed, remote_err):
         data = bytearray(4)
@@ -806,7 +844,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_POS, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_POS, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerAngle(self, hand_id, finger_id, angle, speed, remote_err):
         data = bytearray(4)
@@ -818,7 +856,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_ANGLE, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_ANGLE, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetThumbRootPos(self, hand_id, pos, speed, remote_err):
         data = bytearray(2)
@@ -828,7 +866,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_THUMB_ROOT_POS, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_THUMB_ROOT_POS, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerPosAbsAll(self, hand_id, raw_pos, speed, motor_cnt, remote_err):
         if motor_cnt > MAX_MOTOR_CNT:
@@ -845,7 +883,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_POS_ABS_ALL, data, p_data)
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_POS_ABS_ALL, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerPosAll(self, hand_id, pos, speed, motor_cnt, remote_err):
         if motor_cnt > MAX_MOTOR_CNT:
@@ -862,7 +900,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_POS_ALL, data, p_data)
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_POS_ALL, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerAngleAll(self, hand_id, angle, speed, motor_cnt, remote_err):
         if motor_cnt > MAX_MOTOR_CNT:
@@ -879,10 +917,10 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_ANGLE_ALL, data, p_data)
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_ANGLE_ALL, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerStopParams(self, hand_id, finger_id, speed, stop_current, stop_after_period, retry_interval, remote_err):
-        data = bytearray(1 + 4 + 4 + 4 + 4)
+        data = bytearray(1 + 2 + 2 +2 +2)
         data[0] = finger_id
         data[1] = speed & 0xFF
         data[2] = (speed >> 8) & 0xFF
@@ -896,32 +934,32 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_STOP_PARAMS, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_STOP_PARAMS, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetFingerForcePID(self, hand_id, finger_id, p, i, d, g, remote_err):
         data = bytearray(1 + 4 + 4 + 4 + 4)
         data[0] = finger_id
-        data[1:5] = p.to_bytes(4, byteorder="little")
-        data[5:9] = i.to_bytes(4, byteorder="little")
-        data[9:13] = d.to_bytes(4, byteorder="little")
-        data[13:17] = g.to_bytes(4, byteorder="little")
+        data[1:5] =   struct.pack('f', p)
+        data[5:9] =   struct.pack('f', i)
+        data[9:13] =  struct.pack('f', d)
+        data[13:17] = struct.pack('f', g)
 
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_FINGER_FORCE_PID, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_FINGER_FORCE_PID, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_ResetForce(self, hand_id, remote_err):
         err = self.HAND_SendCmd(hand_id, HAND_CMD_RESET_FORCE, None, 0)
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_RESET_FORCE, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetCustom(self, hand_id, data, send_data_size, recv_data_size, remote_err):
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_CUSTOM, data, send_data_size)
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_CUSTOM, self.timeout, data, recv_data_size, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetSelfTestLevel(self, hand_id, self_test_level, remote_err):
         data = bytearray(1)
@@ -930,7 +968,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_SELF_TEST_LEVEL, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_SELF_TEST_LEVEL, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetBeepSwitch(self, hand_id, beep_on, remote_err):
         data = bytearray(1)
@@ -939,7 +977,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_BEEP_SWITCH, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_BEEP_SWITCH, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_Beep(self, hand_id, duration, remote_err):
         data = bytearray(2)
@@ -949,7 +987,7 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_BEEP, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_BEEP, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_SetButtonPressedCnt(self, hand_id, pressed_cnt, remote_err):
         data = bytearray(1)
@@ -958,10 +996,36 @@ class OHandSerialAPI:
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_BUTTON_PRESSED_CNT, data, len(data))
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_BUTTON_PRESSED_CNT, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
 
     def HAND_StartInit(self, hand_id, remote_err):
         err = self.HAND_SendCmd(hand_id, HAND_CMD_START_INIT, None, 0)
         if err == HAND_RESP_SUCCESS:
             err = self.HAND_GetResponse(hand_id, HAND_CMD_START_INIT, self.timeout, None, remote_err)
-        return err, remote_err
+        return err
+
+    def HAND_SetManufactureData(self, hand_id, key, sub_model, hw_revision, serial_number, customer_tag, remote_err):
+        data = bytearray(28)
+        data[0:2] = key
+        data[2] = sub_model
+        data[3] = hw_revision
+        data[4:20] = serial_number
+        data[20:28] = customer_tag
+
+        err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_MANUFACTURE_DATA, data, len(data))
+        if err == HAND_RESP_SUCCESS:
+            err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_MANUFACTURE_DATA, self.timeout, None, remote_err)
+        return err
+
+    def HAND_SetFingerSpeedCtrlParams(self, hand_id, brake_distance, accel_distance, speed_ratio, remote_err):
+        data = bytearray(8)
+        data[0] = brake_distance & 0xFF
+        data[1] = brake_distance >> 8 & 0xFF
+        data[2] = accel_distance & 0xFF
+        data[3] = accel_distance >> 8 & 0xFF
+        data[4:8] = struct.pack('f', speed_ratio)
+
+        err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_SPEED_CTRL_PARAMS, data, len(data))
+        if err == HAND_RESP_SUCCESS:
+            err = self.HAND_GetResponse(hand_id, HAND_CMD_SET_SPEED_CTRL_PARAMS, self.timeout, None, remote_err)
+        return err
