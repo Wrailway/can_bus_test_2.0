@@ -880,6 +880,96 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
         logger.info("=======================")
 
 @pytest.mark.skip('测试设置pos limit 一直报超时,此case暂时跳过，参数少一个')
+# def test_HAND_SetFingerPosLimit(serial_api_instance):
+#     # 定义测试常量
+#     HAND_ID = 0x02
+#     FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
+    
+#     # 默认参数值（范围0-65535，默认值0）
+#     DEFAULT_POS_LIMIT = 0
+    
+#     # 定义参数的测试值(包含有效/边界/无效值)
+#     PARAM_TEST_DATA = {
+#         'pos_limit': [
+#             (0,          "目标位置最小值0"),
+#             (1,          "目标位置值1"),
+#             (32767,      "目标位置中间值32767"),
+#             (65535,      "目标位置最大值65535"),
+#             (-1,         "目标位置边界值-1"),
+#             (65536,      "目标位置边界值65536")
+#         ]
+#     }
+    
+#     # 测试结果存储
+#     test_results = []
+    
+#     try:
+#         """------------------- 单变量测试 -------------------"""
+#         for finger_id in FINGERS:
+#             logger.info(f"\n===== 开始测试手指 {finger_id} 的位置限制 =====")
+            
+#             # 测试位置限制参数
+#             for pos_limit, desc in PARAM_TEST_DATA['pos_limit']:
+#                 remote_err = []
+#                 err = serial_api_instance.HAND_SetFingerPosLimit(
+#                     HAND_ID, finger_id, 
+#                     0,
+#                     pos_limit,  # 测试变量位置限制值
+#                     remote_err
+#                 )
+                
+#                 # 验证结果
+#                 if 0 <= pos_limit <= 65535:  # 有效范围
+#                     assert err == HAND_RESP_SUCCESS, \
+#                         f"手指 {finger_id} 设置有效位置限制失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+#                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过"))
+#                 else:  # 无效值
+#                     assert err != HAND_RESP_SUCCESS, \
+#                         f"手指 {finger_id} 设置无效位置限制未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+#                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过(预期失败)"))
+            
+#             logger.info(f"手指 {finger_id} 位置限制测试完成")
+        
+#         """------------------- 恢复默认值 -------------------"""
+#         logger.info("\n===== 恢复所有手指的默认位置限制 =====")
+#         for finger_id in FINGERS:
+#             remote_err = []
+#             err, remote_err = serial_api_instance.HAND_SetFingerPosLimit(
+#                 HAND_ID, finger_id, 
+#                  0,
+#                 DEFAULT_POS_LIMIT,  # 恢复默认值
+#                 remote_err
+#             )
+#             assert err == HAND_RESP_SUCCESS, \
+#                 f"恢复手指 {finger_id} 默认位置限制失败, 错误码: err={err},remote_err={remote_err[0]}"
+#             logger.info(f"手指 {finger_id} 已恢复默认位置限制: {DEFAULT_POS_LIMIT}")
+    
+#     except AssertionError as e:
+#         logger.error(f"测试失败: {str(e)}")
+#         # 发生错误时尝试恢复所有手指默认值
+#         try:
+#             logger.warning("正在尝试恢复所有手指默认位置限制...")
+#             for finger_id in FINGERS:
+#                 serial_api_instance.HAND_SetFingerPosLimit(
+#                     HAND_ID, finger_id, 
+#                      0,
+#                     DEFAULT_POS_LIMIT, 
+#                     []
+#                 )
+#         except Exception as recovery_err:
+#             logger.error(f"恢复默认位置限制失败: {str(recovery_err)}")
+#         raise  # 重新抛出原始错误
+    
+#     finally:
+#         """------------------- 测试结果汇总 -------------------"""
+#         logger.info("\n===== 位置限制测试结果汇总 =====")
+#         passed = sum(1 for case, result in test_results if "通过" in result)
+#         total = len(test_results)
+#         logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
+        
+#         for case, result in test_results:
+#             logger.info(f"{case}: {result}")
+#         logger.info("=======================")
 def test_HAND_SetFingerPosLimit(serial_api_instance):
     # 定义测试常量
     HAND_ID = 0x02
@@ -888,15 +978,27 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
     # 默认参数值（范围0-65535，默认值0）
     DEFAULT_POS_LIMIT = 0
     
+    end_pos = [0] * MAX_MOTOR_CNT
+    start_pos = [0] * MAX_MOTOR_CNT
+    motor_cnt = [MAX_MOTOR_CNT]
+    thumb_root_pos = [0] * MAX_THUMB_ROOT_POS
+    thumb_root_pos_cnt = [3]  # 初始请求3个拇指根位置数据
+    err, end_pos_get, start_pos_get, thumb_root_pos_get = serial_api_instance.HAND_GetCaliData(HAND_ID, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, [])
+    
     # 定义参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'pos_limit': [
-            (0,          "目标位置最小值0"),
-            (1,          "目标位置值1"),
-            (32767,      "目标位置中间值32767"),
-            (65535,      "目标位置最大值65535"),
-            (-1,         "目标位置边界值-1"),
-            (65536,      "目标位置边界值65536")
+            # 有效范围测试
+            (start_pos_get, end_pos_get, "正常范围"),
+            (start_pos_get, start_pos_get, "下限等于上限"),
+            (start_pos_get, start_pos_get + 1, "下限接近上限"),
+            (0, 65535, "最大有效范围"),
+            
+            # 无效范围测试
+            (end_pos_get, start_pos_get, "下限大于上限"),
+            (-1, 100, "下限为负数"),
+            (100, 65536, "上限超出范围"),
+            (-1, 65536, "上下限都无效")
         ]
     }
     
@@ -909,23 +1011,23 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的位置限制 =====")
             
             # 测试位置限制参数
-            for pos_limit, desc in PARAM_TEST_DATA['pos_limit']:
+            for min_pos, max_pos, desc in PARAM_TEST_DATA['pos_limit']:
                 remote_err = []
                 err = serial_api_instance.HAND_SetFingerPosLimit(
                     HAND_ID, finger_id, 
-                    0,
-                    pos_limit,  # 测试变量位置限制值
+                    min_pos,  # 下限
+                    max_pos,  # 上限
                     remote_err
                 )
                 
                 # 验证结果
-                if 0 <= pos_limit <= 65535:  # 有效范围
+                if start_pos_get <= min_pos <= max_pos <= end_pos_get:  # 有效范围
                     assert err == HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置有效位置限制失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                        f"手指 {finger_id} 设置有效位置限制失败: {desc}, 错误码: err={err}, remote_err={remote_err[0]}"
                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过"))
                 else:  # 无效值
                     assert err != HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置无效位置限制未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                        f"手指 {finger_id} 设置无效位置限制未报错: {desc}, 错误码: err={err}, remote_err={remote_err[0]}"
                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过(预期失败)"))
             
             logger.info(f"手指 {finger_id} 位置限制测试完成")
@@ -934,15 +1036,15 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
         logger.info("\n===== 恢复所有手指的默认位置限制 =====")
         for finger_id in FINGERS:
             remote_err = []
-            err, remote_err = serial_api_instance.HAND_SetFingerPosLimit(
+            err = serial_api_instance.HAND_SetFingerPosLimit(
                 HAND_ID, finger_id, 
-                 0,
-                DEFAULT_POS_LIMIT,  # 恢复默认值
+                start_pos_get,  # 恢复默认下限
+                end_pos_get,  # 恢复默认上限
                 remote_err
             )
             assert err == HAND_RESP_SUCCESS, \
-                f"恢复手指 {finger_id} 默认位置限制失败, 错误码: err={err},remote_err={remote_err[0]}"
-            logger.info(f"手指 {finger_id} 已恢复默认位置限制: {DEFAULT_POS_LIMIT}")
+                f"恢复手指 {finger_id} 默认位置限制失败, 错误码: err={err}, remote_err={remote_err[0]}"
+            logger.info(f"手指 {finger_id} 已恢复默认位置限制")
     
     except AssertionError as e:
         logger.error(f"测试失败: {str(e)}")
@@ -952,8 +1054,8 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
             for finger_id in FINGERS:
                 serial_api_instance.HAND_SetFingerPosLimit(
                     HAND_ID, finger_id, 
-                     0,
-                    DEFAULT_POS_LIMIT, 
+                    start_pos_get, 
+                    end_pos_get, 
                     []
                 )
         except Exception as recovery_err:
