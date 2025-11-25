@@ -17,6 +17,7 @@ logger.addHandler(console_handler)
 
 ADDRESS_MASTER = 0x01
 FINGER_POS_TARGET_MAX_LOSS = 100
+HAND_ID = 0X02
 
 # 初始化 API 实例（pytest夹具）
 @pytest.fixture
@@ -58,282 +59,245 @@ def serial_api_instance():
                 logger.error(f"Error closing CAN bus: {e}")
 
 # --------------------------- GET 命令测试 ---------------------------
-# def test_HAND_GetProtocolVersion(serial_api_instance):
-#     hand_id = 0x02
-#     major, minor = [0], [0]
-#     err, major_get, minor_get  = serial_api_instance.HAND_GetProtocolVersion(hand_id, major, minor, [])
-#     assert err == HAND_RESP_SUCCESS, f"获取协议版本失败: err={err}"
-#     logger.info(f"成功获取协议版本: V{major_get}.{minor_get}")
+def test_HAND_GetProtocolVersion(serial_api_instance):
+    major, minor = [0], [0]
+    err, major_get, minor_get  = serial_api_instance.HAND_GetProtocolVersion(HAND_ID, major, minor, [])
+    assert err == HAND_RESP_SUCCESS, f"获取协议版本失败: err={err}"
+    logger.info(f"成功获取协议版本: V{major_get}.{minor_get}")
 
-# def test_HAND_GetFirmwareVersion(serial_api_instance):
-#     hand_id = 0x02
-#     major, minor, revision = [0], [0], [0]
-#     err, major_get, minor_get, revision_get = serial_api_instance.HAND_GetFirmwareVersion(hand_id, major, minor, revision, [])
-#     assert err == HAND_RESP_SUCCESS, f"获取固件版本失败: err={err}"
-#     logger.info(f"成功获固件版本: V{major_get}.{minor_get}.{revision_get}")
+def test_HAND_GetFirmwareVersion(serial_api_instance):
+    major, minor, revision = [0], [0], [0]
+    err, major_get, minor_get, revision_get = serial_api_instance.HAND_GetFirmwareVersion(HAND_ID, major, minor, revision, [])
+    assert err == HAND_RESP_SUCCESS, f"获取固件版本失败: err={err}"
+    logger.info(f"成功获固件版本: V{major_get}.{minor_get}.{revision_get}")
 
-# def test_HAND_GetHardwareVersion(serial_api_instance):
-#     hand_id = 0x02
-#     hw_type, hw_ver, boot_version = [0], [0],[0]
-#     err, hw_type_get, hw_ver_get, boot_version_get = serial_api_instance.HAND_GetHardwareVersion(hand_id, hw_type, hw_ver, boot_version, [])
-#     assert err == HAND_RESP_SUCCESS, f"获取硬件版本失败: err={err}"
-#     logger.info(f"成功获取硬件版本: V{hw_type_get}.{hw_ver_get}.{boot_version_get}")
+def test_HAND_GetHardwareVersion(serial_api_instance):
+    hw_type, hw_ver, boot_version = [0], [0],[0]
+    err, hw_type_get, hw_ver_get, boot_version_get = serial_api_instance.HAND_GetHardwareVersion(HAND_ID, hw_type, hw_ver, boot_version, [])
+    assert err == HAND_RESP_SUCCESS, f"获取硬件版本失败: err={err}"
+    logger.info(f"成功获取硬件版本: V{hw_type_get}.{hw_ver_get}.{boot_version_get}")
 
 
-# def test_HAND_GetFingerPID(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     p = [0]
-#     i = [0]
-#     d = [0]
-#     g = [0]
-#     for j in range(6):
-#         err, p_get, i_get,d_get,g_get= serial_api_instance.HAND_GetFingerPID(hand_id, finger_id+j, p, i, d, g, [])
-#         assert err == HAND_RESP_SUCCESS, f"获取手指p, i, d, g值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+j} p, i, d, g值: {p_get},{i_get},{d_get},{g_get}")
+def test_HAND_GetFingerPID(serial_api_instance):
+    p = [0]
+    i = [0]
+    d = [0]
+    g = [0]
+    for finger_id in range(MAX_MOTOR_CNT):
+        err, p_get, i_get,d_get,g_get= serial_api_instance.HAND_GetFingerPID(HAND_ID, finger_id, p, i, d, g, [])
+        assert err == HAND_RESP_SUCCESS, f"获取手指p, i, d, g值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} p, i, d, g值: {p_get},{i_get},{d_get},{g_get}")
 
 
-# def test_HAND_GetFingerCurrentLimit(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     current_limit = [0]
-#     for i in range(6):
-#         err, current_limit_get = serial_api_instance.HAND_GetFingerCurrentLimit(hand_id, finger_id+i, current_limit, [])
-#         assert err == HAND_RESP_SUCCESS, f"获取手指电流限制值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+i} 电流限制值: {current_limit_get}")
+def test_HAND_GetFingerCurrentLimit(serial_api_instance):
+    current_limit = [0]
+    for finger_id in range(MAX_MOTOR_CNT):
+        err, current_limit_get = serial_api_instance.HAND_GetFingerCurrentLimit(HAND_ID, finger_id, current_limit, [])
+        assert err == HAND_RESP_SUCCESS, f"获取手指电流限制值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} 电流限制值: {current_limit_get}")
 
-# def test_HAND_GetFingerCurrent(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     current = [0]
-#     for i in range(6):
-#         err, current_get = serial_api_instance.HAND_GetFingerCurrent(hand_id, finger_id+i, current, [])
-#         assert err == HAND_RESP_SUCCESS,f"获取手指电流值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+i} 电流值: {current_get}")
+def test_HAND_GetFingerCurrent(serial_api_instance):
+    current = [0]
+    for finger_id in range(MAX_MOTOR_CNT):
+        err, current_get = serial_api_instance.HAND_GetFingerCurrent(HAND_ID, finger_id, current, [])
+        assert err == HAND_RESP_SUCCESS,f"获取手指电流值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} 电流值: {current_get}")
 
-# def test_HAND_GetFingerForceTarget(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     force_target = [0]
-#     for i in range(6):
-#         err, force_target_get = serial_api_instance.HAND_GetFingerForceTarget(hand_id, finger_id, force_target, [])
-#         assert err == HAND_RESP_SUCCESS,f"获取手指力量目标值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+i} 力量目标值: {force_target_get}")
+def test_HAND_GetFingerForceTarget(serial_api_instance):
+    force_target = [0]
+    for finger_id in range(MAX_MOTOR_CNT):
+        err, force_target_get = serial_api_instance.HAND_GetFingerForceTarget(HAND_ID, finger_id, force_target, [])
+        assert err == HAND_RESP_SUCCESS,f"获取手指力量目标值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} 力量目标值: {force_target_get}")
 
-# def test_HAND_GetFingerForce(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     force_entry_cnt = [0]
-#     force = [0] * MAX_FORCE_ENTRIES
-#     for i in range(6):
-#         err, force_get = serial_api_instance.HAND_GetFingerForce(hand_id, finger_id+i, force_entry_cnt, force, [])
-#         assert err == HAND_RESP_SUCCESS,f"获取手指当前力量值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+i} 力量目标值: {force_get}")
+def test_HAND_GetFingerForce(serial_api_instance):
+    force_entry_cnt = [0]
+    force = [0] * MAX_FORCE_ENTRIES
+    for finger_id in range(MAX_MOTOR_CNT):
+        err, force_get = serial_api_instance.HAND_GetFingerForce(HAND_ID, finger_id, force_entry_cnt, force, [])
+        assert err == HAND_RESP_SUCCESS,f"获取手指当前力量值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} 力量目标值: {force_get}")
 
-# def test_HAND_GetFingerPosLimit(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     low_limit = [0]
-#     high_limit = [0]
-#     for i in range(6):
-#         err, low_limit_get,high_limit_get = serial_api_instance.HAND_GetFingerPosLimit(hand_id, finger_id+i, low_limit, high_limit, [])
-#         assert err == HAND_RESP_SUCCESS,f"获取手指绝对位置限制值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+i} 绝对位置限制值: {low_limit_get}, {high_limit_get}")
+def test_HAND_GetFingerPosLimit(serial_api_instance):
+    low_limit = [0]
+    high_limit = [0]
+    for finger_id in range(MAX_MOTOR_CNT):
+        err, low_limit_get,high_limit_get = serial_api_instance.HAND_GetFingerPosLimit(HAND_ID, finger_id, low_limit, high_limit, [])
+        assert err == HAND_RESP_SUCCESS,f"获取手指绝对位置限制值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} 绝对位置限制值: {low_limit_get}, {high_limit_get}")
 
-# def test_HAND_GetFingerPosAbs(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     target_pos = [0]
-#     current_pos = [0]
-#     for i in range(6):
-#         err, target_pos_get, current_pos_get= serial_api_instance.HAND_GetFingerPosAbs(hand_id, finger_id+i, target_pos, current_pos, [])
-#         assert err == HAND_RESP_SUCCESS,f"获取手指绝当前绝对位置值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+i} 当前绝对位置值: {target_pos_get}, {current_pos_get}")
+def test_HAND_GetFingerPosAbs(serial_api_instance):
+    target_pos = [0]
+    current_pos = [0]
+    for finger_id in range(MAX_MOTOR_CNT):
+        err, target_pos_get, current_pos_get= serial_api_instance.HAND_GetFingerPosAbs(HAND_ID, finger_id, target_pos, current_pos, [])
+        assert err == HAND_RESP_SUCCESS,f"获取手指绝当前绝对位置值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} 当前绝对位置值: {target_pos_get}, {current_pos_get}")
 
 
-# def test_HAND_GetFingerPos(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     target_pos = [0]
-#     current_pos = [0]
-#     for i in range(6):
-#         err, target_pos_get, current_pos_get = serial_api_instance.HAND_GetFingerPos(hand_id, finger_id+i, target_pos, current_pos, [])
-#         assert err == HAND_RESP_SUCCESS,f"获取手指绝当前逻辑位置值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+i} 当前逻辑位置值: {target_pos_get}, {current_pos_get}")
+def test_HAND_GetFingerPos(serial_api_instance):
+    target_pos = [0]
+    current_pos = [0]
+    for finger_id in range(MAX_MOTOR_CNT):
+        err, target_pos_get, current_pos_get = serial_api_instance.HAND_GetFingerPos(HAND_ID, finger_id, target_pos, current_pos, [])
+        assert err == HAND_RESP_SUCCESS,f"获取手指绝当前逻辑位置值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} 当前逻辑位置值: {target_pos_get}, {current_pos_get}")
 
-# def test_HAND_GetFingerAngle(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     target_angle = [0]
-#     current_angle = [0]
-#     for i in range(6):
-#         err, target_angle_get, current_angle_get= serial_api_instance.HAND_GetFingerAngle(hand_id, finger_id+i, target_angle, current_angle, [])
-#         assert err == HAND_RESP_SUCCESS,f"获取手指第一关节角度值失败:err={err}"
-#         logger.info(f"成功获取手指{finger_id+i} 第一关节角度值: {target_angle_get}, {current_angle_get}")
+def test_HAND_GetFingerAngle(serial_api_instance):
+    target_angle = [0]
+    current_angle = [0]
+    for  finger_id in range(MAX_MOTOR_CNT):
+        err, target_angle_get, current_angle_get= serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle, current_angle, [])
+        assert err == HAND_RESP_SUCCESS,f"获取手指第一关节角度值失败:err={err}"
+        logger.info(f"成功获取手指{finger_id} 第一关节角度值: {target_angle_get}, {current_angle_get}")
 
-# def test_HAND_GetThumbRootPos(serial_api_instance):
-#     hand_id = 0x02
-#     raw_encoder = [0]
-#     pos = [0]
-#     err, raw_encoder_get, pos_get = serial_api_instance.HAND_GetThumbRootPos(hand_id, raw_encoder, pos, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取大拇指旋转预设位置值失败: err={err}"
-#     logger.info(f"成功获取大拇指旋转预设位置值: {raw_encoder_get}, {pos_get}")
+def test_HAND_GetThumbRootPos(serial_api_instance):
+    raw_encoder = [0]
+    pos = [0]
+    err, raw_encoder_get, pos_get = serial_api_instance.HAND_GetThumbRootPos(HAND_ID, raw_encoder, pos, [])
+    assert err == HAND_RESP_SUCCESS,f"获取大拇指旋转预设位置值失败: err={err}"
+    logger.info(f"成功获取大拇指旋转预设位置值: {raw_encoder_get}, {pos_get}")
 
-# def test_HAND_GetFingerPosAbsAll(serial_api_instance):
-#     hand_id = 0x02
-#     target_pos = [0] * MAX_MOTOR_CNT
-#     current_pos = [0] * MAX_MOTOR_CNT
-#     motor_cnt = [MAX_MOTOR_CNT]
-#     err, target_pos_get,current_pos_get= serial_api_instance.HAND_GetFingerPosAbsAll(hand_id, target_pos, current_pos, motor_cnt, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取所有手指当前的绝对位置值失败: err={err}"
-#     logger.info(f"成功获取所有手指当前的绝对位置值: {target_pos_get}, {current_pos_get}")
+def test_HAND_GetFingerPosAbsAll(serial_api_instance):
+    target_pos = [0] * MAX_MOTOR_CNT
+    current_pos = [0] * MAX_MOTOR_CNT
+    motor_cnt = [MAX_MOTOR_CNT]
+    err, target_pos_get,current_pos_get= serial_api_instance.HAND_GetFingerPosAbsAll(HAND_ID, target_pos, current_pos, motor_cnt, [])
+    assert err == HAND_RESP_SUCCESS,f"获取所有手指当前的绝对位置值失败: err={err}"
+    logger.info(f"成功获取所有手指当前的绝对位置值: {target_pos_get}, {current_pos_get}")
 
 
-# def test_HAND_GetFingerPosAll(serial_api_instance):
-#     hand_id = 0x02
-#     target_pos = [0] * MAX_MOTOR_CNT
-#     current_pos = [0] * MAX_MOTOR_CNT
-#     motor_cnt = [MAX_MOTOR_CNT]
-#     remote_err = []
-#     err, target_pos_get,current_pos_get = serial_api_instance.HAND_GetFingerPosAll(hand_id, target_pos, current_pos, motor_cnt, remote_err)
-#     assert err == HAND_RESP_SUCCESS,f"获取所有手指当前的逻辑位置值失败: err={err}"
-#     logger.info(f"成功获取所有手指当前的逻辑位置值:  {target_pos_get}, {current_pos_get}")
+def test_HAND_GetFingerPosAll(serial_api_instance):
+    target_pos = [0] * MAX_MOTOR_CNT
+    current_pos = [0] * MAX_MOTOR_CNT
+    motor_cnt = [MAX_MOTOR_CNT]
+    remote_err = []
+    err, target_pos_get,current_pos_get = serial_api_instance.HAND_GetFingerPosAll(HAND_ID, target_pos, current_pos, motor_cnt, remote_err)
+    assert err == HAND_RESP_SUCCESS,f"获取所有手指当前的逻辑位置值失败: err={err}"
+    logger.info(f"成功获取所有手指当前的逻辑位置值:  {target_pos_get}, {current_pos_get}")
 
-# def test_HAND_GetFingerAngleAll(serial_api_instance):
-#     hand_id = 0x02
-#     target_angle = [0] * MAX_MOTOR_CNT
-#     current_angle = [0] * MAX_MOTOR_CNT
-#     motor_cnt = [MAX_MOTOR_CNT]
-#     err, remtarget_angle_get, current_angle_get= serial_api_instance.HAND_GetFingerAngleAll(hand_id, target_angle, current_angle, motor_cnt, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取所有手指值失败: err={err}"
-#     logger.info(f"成功获取所有手指当前的逻辑位置值: {remtarget_angle_get}, {current_angle_get}")
+def test_HAND_GetFingerAngleAll(serial_api_instance):
+    target_angle = [0] * MAX_MOTOR_CNT
+    current_angle = [0] * MAX_MOTOR_CNT
+    motor_cnt = [MAX_MOTOR_CNT]
+    err, remtarget_angle_get, current_angle_get= serial_api_instance.HAND_GetFingerAngleAll(HAND_ID, target_angle, current_angle, motor_cnt, [])
+    assert err == HAND_RESP_SUCCESS,f"获取所有手指值失败: err={err}"
+    logger.info(f"成功获取所有手指当前的逻辑位置值: {remtarget_angle_get}, {current_angle_get}")
     
-# def test_HAND_GetFingerForcePID(serial_api_instance):
-#     hand_id = 0x02
-#     finger_id = 0x00
-#     p = [0]
-#     i = [0]
-#     d = [0]
-#     g = [0]
-#     for j in range(5): #拇指旋转没带
-#         err, p_get,i_get, d_get, g_get = serial_api_instance.HAND_GetFingerForcePID(hand_id, finger_id+j, p, i, d, g, [])
-#         assert err == HAND_RESP_SUCCESS,f"获取手指力量p, i, d, g值失败: err={err}"
-#         logger.info(f"成功获取手指{finger_id+j} 力量p, i, d, g值: {p_get}, {i_get},{d_get},{g_get}")
+def test_HAND_GetFingerForcePID(serial_api_instance):
+    p = [0]
+    i = [0]
+    d = [0]
+    g = [0]
+    for finger_id in range(MAX_MOTOR_CNT-1): #拇指旋转没带
+        err, p_get,i_get, d_get, g_get = serial_api_instance.HAND_GetFingerForcePID(HAND_ID, finger_id, p, i, d, g, [])
+        assert err == HAND_RESP_SUCCESS,f"获取手指力量p, i, d, g值失败: err={err}"
+        logger.info(f"成功获取手指{finger_id} 力量p, i, d, g值: {p_get}, {i_get},{d_get},{g_get}")
 
-# def test_HAND_GetSelfTestLevel(serial_api_instance):
-#     hand_id = 0x02
-#     self_test_level = [0]
-#     err, self_test_level_get = serial_api_instance.HAND_GetSelfTestLevel(hand_id, self_test_level, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取手自检开关状态失败: err={err}"
-#     logger.info(f"成功获取手自检开关状态: {self_test_level_get}")
+def test_HAND_GetSelfTestLevel(serial_api_instance):
+    self_test_level = [0]
+    err, self_test_level_get = serial_api_instance.HAND_GetSelfTestLevel(HAND_ID, self_test_level, [])
+    assert err == HAND_RESP_SUCCESS,f"获取手自检开关状态失败: err={err}"
+    logger.info(f"成功获取手自检开关状态: {self_test_level_get}")
 
-# def test_HAND_GetBeepSwitch(serial_api_instance):
-#     hand_id = 0x02
-#     beep_switch = [0]
-#     err, beep_switch_get = serial_api_instance.HAND_GetBeepSwitch(hand_id, beep_switch, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取手蜂鸣器开关状态失败: err={err}"
-#     logger.info(f"成功获取手蜂鸣器开关状态: {beep_switch_get}")
+def test_HAND_GetBeepSwitch(serial_api_instance):
+    beep_switch = [0]
+    err, beep_switch_get = serial_api_instance.HAND_GetBeepSwitch(HAND_ID, beep_switch, [])
+    assert err == HAND_RESP_SUCCESS,f"获取手蜂鸣器开关状态失败: err={err}"
+    logger.info(f"成功获取手蜂鸣器开关状态: {beep_switch_get}")
 
-# def test_HAND_GetButtonPressedCnt(serial_api_instance):
-#     hand_id = 0x02
-#     pressed_cnt = [0]
-#     err, pressed_cnt_get = serial_api_instance.HAND_GetButtonPressedCnt(hand_id, pressed_cnt, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取手按钮按下次数值失败:  err={err}"
-#     logger.info(f"成功获取手按钮按下次数值: {pressed_cnt_get}")
+def test_HAND_GetButtonPressedCnt(serial_api_instance):
+    pressed_cnt = [0]
+    err, pressed_cnt_get = serial_api_instance.HAND_GetButtonPressedCnt(HAND_ID, pressed_cnt, [])
+    assert err == HAND_RESP_SUCCESS,f"获取手按钮按下次数值失败:  err={err}"
+    logger.info(f"成功获取手按钮按下次数值: {pressed_cnt_get}")
 
-# def test_HAND_GetUID(serial_api_instance):
-#     hand_id = 0x02
-#     uid_w0 = [0]
-#     uid_w1 = [0]
-#     uid_w2 = [0]
-#     err, uid_w0_get,uid_w1_get,uid_w2_get = serial_api_instance.HAND_GetUID(hand_id, uid_w0, uid_w1, uid_w2, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取手UID值失败: err={err}"
-#     logger.info(f"成功获取手UID值: {uid_w0_get},{uid_w1_get},{uid_w2_get}")
+def test_HAND_GetUID(serial_api_instance):
+    uid_w0 = [0]
+    uid_w1 = [0]
+    uid_w2 = [0]
+    err, uid_w0_get,uid_w1_get,uid_w2_get = serial_api_instance.HAND_GetUID(HAND_ID, uid_w0, uid_w1, uid_w2, [])
+    assert err == HAND_RESP_SUCCESS,f"获取手UID值失败: err={err}"
+    logger.info(f"成功获取手UID值: {uid_w0_get},{uid_w1_get},{uid_w2_get}")
     
-# @pytest.mark.skip('未实现，只返回err')
-# def test_HAND_GetBatteryVoltage(serial_api_instance):
-#     hand_id = 0x02
-#     voltage = [0]
-#     err, voltage_get = serial_api_instance.HAND_GetBatteryVoltage(hand_id, voltage, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取手电池电压值失败: err={err}"
-#     logger.info(f"成功获取手电池电压值: {voltage_get}")
+@pytest.mark.skip('功能未实现，只返回err，先跳过')
+def test_HAND_GetBatteryVoltage(serial_api_instance):
+    voltage = [0]
+    err, voltage_get = serial_api_instance.HAND_GetBatteryVoltage(HAND_ID, voltage, [])
+    assert err == HAND_RESP_SUCCESS,f"获取手电池电压值失败: err={err}"
+    logger.info(f"成功获取手电池电压值: {voltage_get}")
     
-# @pytest.mark.skip('未实现，只返回err')
-# def test_HAND_GetUsageStat(serial_api_instance):
-#     hand_id = 0x02
-#     total_use_time = [0]
-#     total_open_times = [0] * MAX_MOTOR_CNT
-#     motor_cnt = MAX_MOTOR_CNT
-#     err, total_use_time_get,total_open_times_get= serial_api_instance.HAND_GetUsageStat(hand_id, total_use_time, total_open_times, motor_cnt, [])
-#     assert err == HAND_RESP_SUCCESS,f"获取手使用数据值失败: err={err}"
-#     logger.info(f"成功获取手使用数据值: {total_use_time_get},{total_open_times_get}")
+@pytest.mark.skip('功能未实现，只返回err，先跳过')
+def test_HAND_GetUsageStat(serial_api_instance):
+    total_use_time = [0]
+    total_open_times = [0] * MAX_MOTOR_CNT
+    motor_cnt = MAX_MOTOR_CNT
+    err, total_use_time_get,total_open_times_get= serial_api_instance.HAND_GetUsageStat(HAND_ID, total_use_time, total_open_times, motor_cnt, [])
+    assert err == HAND_RESP_SUCCESS,f"获取手使用数据值失败: err={err}"
+    logger.info(f"成功获取手使用数据值: {total_use_time_get},{total_open_times_get}")
     
-# def test_GetCalidata(serial_api_instance):
-#     hand_id = 0x02
-#     end_pos = [0] * MAX_MOTOR_CNT
-#     start_pos = [0] * MAX_MOTOR_CNT
-#     motor_cnt = [MAX_MOTOR_CNT]
-#     thumb_root_pos = [0] * MAX_THUMB_ROOT_POS
-#     thumb_root_pos_cnt = [3]  # 初始请求3个拇指根位置数据
-#     err, end_pos_get, start_pos_get, thumb_root_pos_get = serial_api_instance.HAND_GetCaliData(hand_id, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, [])
-#     assert err == HAND_RESP_SUCCESS, f"获取矫正数据失败: {err}"
-#     logger.info(f"成功获取矫正数据, end_pos: {end_pos_get}, start_pos: {start_pos_get}, thumb_root_pos: {thumb_root_pos_get}, ")
+def test_GetCalidata(serial_api_instance):
+    end_pos = [0] * MAX_MOTOR_CNT
+    start_pos = [0] * MAX_MOTOR_CNT
+    motor_cnt = [MAX_MOTOR_CNT]
+    thumb_root_pos = [0] * MAX_THUMB_ROOT_POS
+    thumb_root_pos_cnt = [3]  # 初始请求3个拇指根位置数据
+    err, end_pos_get, start_pos_get, thumb_root_pos_get = serial_api_instance.HAND_GetCaliData(HAND_ID, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, [])
+    assert err == HAND_RESP_SUCCESS, f"获取矫正数据失败: {err}"
+    logger.info(f"成功获取矫正数据, end_pos: {end_pos_get}, start_pos: {start_pos_get}, thumb_root_pos: {thumb_root_pos_get}, ")
     
-# def test_GetfingerStopParams(serial_api_instance):
-#     hand_id = 0x02
-#     speed, stop_current, stop_after_period, retry_interval = [0], [0], [0], [0]
-#     for i in range(MAX_MOTOR_CNT):
-#         err, speed_get, stop_current_get, stop_after_period_get, retry_interval_get = serial_api_instance.HAND_GetFingerStopParams(hand_id, i, speed, stop_current, stop_after_period, retry_interval, [])
-#         assert err == HAND_RESP_SUCCESS, f"获取手指停止参数失败: {err}"
-#         logger.info(f"成功获取手指停止参数: 速度: {speed_get}, 暂停电流:{stop_current_get}, 暂停间隔:{stop_after_period_get}, 重试间隔:{retry_interval_get}")
+def test_GetfingerStopParams(serial_api_instance):
+    speed, stop_current, stop_after_period, retry_interval = [0], [0], [0], [0]
+    for i in range(MAX_MOTOR_CNT):
+        err, speed_get, stop_current_get, stop_after_period_get, retry_interval_get = serial_api_instance.HAND_GetFingerStopParams(HAND_ID, i, speed, stop_current, stop_after_period, retry_interval, [])
+        assert err == HAND_RESP_SUCCESS, f"获取手指停止参数失败: {err}"
+        logger.info(f"成功获取手指停止参数: 速度: {speed_get}, 暂停电流:{stop_current_get}, 暂停间隔:{stop_after_period_get}, 重试间隔:{retry_interval_get}")
         
-# def test_GetManufactureData(serial_api_instance):
-#     hand_id = 0x02
-#     sub_model, hw_revision, serial_number, customer_tag = [0], [0], [0], [0]
-#     err, sub_model_get, hw_revision_get, serial_number_get, customer_tag_get = serial_api_instance.HAND_GetManufactureData(hand_id, sub_model, hw_revision, serial_number, customer_tag, [])
-#     assert err == HAND_RESP_SUCCESS, f"manufacture_data_get: {err}\n"
-#     logger.info(f"sub_model: {sub_model_get}, hw_revision: {hw_revision_get}, serial_number: {serial_number_get}, customer_tag: {customer_tag_get}")
+def test_GetManufactureData(serial_api_instance):
+    sub_model, hw_revision, serial_number, customer_tag = [0], [0], [0], [0]
+    err, sub_model_get, hw_revision_get, serial_number_get, customer_tag_get = serial_api_instance.HAND_GetManufactureData(HAND_ID, sub_model, hw_revision, serial_number, customer_tag, [])
+    assert err == HAND_RESP_SUCCESS, f"manufacture_data_get: {err}\n"
+    logger.info(f"sub_model: {sub_model_get}, hw_revision: {hw_revision_get}, serial_number: {serial_number_get}, customer_tag: {customer_tag_get}")
 
-# def test_GetFingerSpeedCtrlParams(serial_api_instance):
-#     hand_id = 0x02
-#     brake_distance, accel_distance, speed_ratio = [0], [0], [0]
-#     err, brake_distance_get, accel_distance_get, speed_ratio_get = serial_api_instance.HAND_GetFingerSpeedCtrlParams(hand_id, brake_distance, accel_distance, speed_ratio, [])
-#     assert err == HAND_RESP_SUCCESS, f"test_speed_ctrl_params_get: {err}\n"
-#     logger.info(f"brake_distance: {brake_distance_get}, accel_distance: {accel_distance_get}, speed_ratio: {speed_ratio_get}")
+def test_GetFingerSpeedCtrlParams(serial_api_instance):
+    brake_distance, accel_distance, speed_ratio = [0], [0], [0]
+    err, brake_distance_get, accel_distance_get, speed_ratio_get = serial_api_instance.HAND_GetFingerSpeedCtrlParams(HAND_ID, brake_distance, accel_distance, speed_ratio, [])
+    assert err == HAND_RESP_SUCCESS, f"test_speed_ctrl_params_get: {err}\n"
+    logger.info(f"brake_distance: {brake_distance_get}, accel_distance: {accel_distance_get}, speed_ratio: {speed_ratio_get}")
 
 
 
 # # --------------------------- SET 命令测试 ---------------------------
-# def test_HAND_Reset(serial_api_instance):
-#     hand_id = 0x02
-#     RESET_MODE ={
-#         '工作模式':0,
-#         'DFU模式':1
-#     }
-#     # mode = 0
-#     remote_err = []
-
-#     err = serial_api_instance.HAND_Reset(hand_id, RESET_MODE.get('工作模式'), remote_err)
-#     assert err == HAND_RESP_SUCCESS,f"设置手重置失败: err={err}"
-#     logger.info(f'设置手重置重启到工作模式成功')
-#     time.sleep(15)
-    
-#     err = serial_api_instance.HAND_Reset(hand_id, RESET_MODE.get('DFU模式'), remote_err)
-#     assert err == HAND_RESP_SUCCESS,f"设置手重置失败: err={err}"
-#     logger.info(f'设置手重置重启到DFU模式成功')
-#     time.sleep(15)
-    
-#     logger.info('恢复默认值')
-#     err = serial_api_instance.HAND_Reset(hand_id, RESET_MODE.get('工作模式'), remote_err)
-#     assert err == HAND_RESP_SUCCESS,f"恢复默认值失败: err={err}"
-#     logger.info('恢复默认值成功')
-    
-@pytest.mark.skip('Rohand 暂时跳过关机接口测试，单独测试pass')
-def test_HAND_PowerOff(serial_api_instance):
-    hand_id = 0x02
+# @pytest.mark.skip('测试通过，先跳过')  
+def test_HAND_Reset(serial_api_instance):
+    delay_milli_seconds_impl(5000)
+    RESET_MODE ={
+        '工作模式':0,
+        'DFU模式':1
+    }
+    # mode = 0
     remote_err = []
 
-    err = serial_api_instance.HAND_PowerOff(hand_id, remote_err)
+    err = serial_api_instance.HAND_Reset(HAND_ID, RESET_MODE.get('工作模式'), remote_err)
+    assert err == HAND_RESP_SUCCESS,f"设置手重置失败: err={err}"
+    logger.info(f'设置手重置重启到工作模式成功')
+    time.sleep(15)
+    
+    err = serial_api_instance.HAND_Reset(HAND_ID, RESET_MODE.get('DFU模式'), remote_err)
+    assert err == HAND_RESP_SUCCESS,f"设置手重置失败: err={err}"
+    logger.info(f'设置手重置重启到DFU模式成功')
+    time.sleep(15)
+    
+    logger.info('恢复默认值')
+    err = serial_api_instance.HAND_Reset(HAND_ID, RESET_MODE.get('工作模式'), remote_err)
+    assert err == HAND_RESP_SUCCESS,f"恢复默认值失败: err={err}"
+    logger.info('恢复默认值成功')
+    
+# @pytest.mark.skip('测试通过，先跳过')
+def test_HAND_PowerOff(serial_api_instance):
+    remote_err = []
+    delay_milli_seconds_impl(5000)
+    err = serial_api_instance.HAND_PowerOff(HAND_ID, remote_err)
     assert err == HAND_RESP_SUCCESS,f"设置关机失败: err={err},remote_err={remote_err[0]}"
     logger.info('设置关机成功成功')
 
@@ -341,7 +305,7 @@ def test_HAND_PowerOff(serial_api_instance):
 # @pytest.mark.skip('先跳过设备ID的修改')  
 # def test_HAND_SetID(serial_api_instance):
 #     """测试设置设备ID功能（适配API实际方法，移除HAND_GetID依赖）"""
-#     original_hand_id = 0x02  # 初始默认ID
+#     original_HAND_ID = 0x02  # 初始默认ID
 #     test_results = []
     
 #     # 保存原始API的私有数据用于重建连接
@@ -365,7 +329,7 @@ def test_HAND_PowerOff(serial_api_instance):
 #             remote_err = []
             
 #             # 发送设置ID命令（使用API中实际存在的HAND_SetNodeID对应方法）
-#             set_err = serial_api_instance.HAND_SetID(original_hand_id, new_id, remote_err)
+#             set_err = serial_api_instance.HAND_SetID(original_HAND_ID, new_id, remote_err)
 #             print('2222')
 #             # 处理有效ID（2-247）
 #             if 3 <= new_id <= 247:
@@ -407,12 +371,12 @@ def test_HAND_PowerOff(serial_api_instance):
 #                 logger.info(f"新ID {new_id} 验证成功（通信正常）")
                 
 #                 # 恢复原始ID
-#                 recover_err, _ = serial_api_instance.HAND_SetID(new_id, original_hand_id, [])
+#                 recover_err, _ = serial_api_instance.HAND_SetID(new_id, original_HAND_ID, [])
 #                 assert recover_err == HAND_RESP_SUCCESS, \
 #                     f"恢复原始ID命令失败，错误码: {recover_err}"
                 
 #                 # 等待恢复后重启
-#                 logger.info(f"等待设备恢复原始ID {original_hand_id}...")
+#                 logger.info(f"等待设备恢复原始ID {original_HAND_ID}...")
 #                 time.sleep(5)
                 
 #                 # 关闭当前连接
@@ -427,7 +391,7 @@ def test_HAND_PowerOff(serial_api_instance):
 #                 serial_api_instance = OHandSerialAPI(
 #                     private_data=can_interface_instance,
 #                     protocol=0,
-#                     address_master=original_hand_id,
+#                     address_master=original_HAND_ID,
 #                     send_data_impl=send_data_impl,
 #                     recv_data_impl=recv_data_impl
 #                 )
@@ -436,10 +400,10 @@ def test_HAND_PowerOff(serial_api_instance):
                 
 #                 # 验证原始ID恢复：查询协议版本判断连接
 #                 major, minor = [0], [0]
-#                 recover_verify_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_hand_id, major, minor, [])
+#                 recover_verify_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_HAND_ID, major, minor, [])
 #                 assert recover_verify_err == HAND_RESP_SUCCESS, \
-#                     f"原始ID {original_hand_id} 恢复失败，通信错误: {recover_verify_err}"
-#                 logger.info(f"原始ID {original_hand_id} 恢复成功（通信正常）")
+#                     f"原始ID {original_HAND_ID} 恢复失败，通信错误: {recover_verify_err}"
+#                 logger.info(f"原始ID {original_HAND_ID} 恢复成功（通信正常）")
             
 #             # 处理无效ID（超出2-247范围）
 #             else:
@@ -449,7 +413,7 @@ def test_HAND_PowerOff(serial_api_instance):
                 
 #                 # 验证原始ID仍能通信（未被修改）
 #                 major, minor = [0], [0]
-#                 check_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_hand_id, major, minor, [])
+#                 check_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_HAND_ID, major, minor, [])
 #                 assert check_err == HAND_RESP_SUCCESS, \
 #                     f"无效ID设置后原始ID通信失败，错误码: {check_err}"
                 
@@ -476,21 +440,21 @@ def test_HAND_PowerOff(serial_api_instance):
 #             serial_api_instance = OHandSerialAPI(
 #                 private_data=can_interface_instance,
 #                 protocol=0,
-#                 address_master=original_hand_id,
+#                 address_master=original_HAND_ID,
 #                 send_data_impl=send_data_impl,
 #                 recv_data_impl=recv_data_impl
 #             )
 #             serial_api_instance.HAND_SetTimerFunction(get_milli_seconds_impl, delay_milli_seconds_impl)
             
 #             # 恢复原始ID命令
-#             final_err, _ = serial_api_instance.HAND_SetID(original_hand_id, original_hand_id, [])
+#             final_err, _ = serial_api_instance.HAND_SetID(original_HAND_ID, original_HAND_ID, [])
 #             time.sleep(3)
             
 #             # 验证最终状态
 #             major, minor = [0], [0]
-#             final_verify_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_hand_id, major, minor, [])
+#             final_verify_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_HAND_ID, major, minor, [])
 #             if final_verify_err == HAND_RESP_SUCCESS:
-#                 logger.info(f"最终恢复原始ID {original_hand_id} 成功（通信正常）")
+#                 logger.info(f"最终恢复原始ID {original_HAND_ID} 成功（通信正常）")
 #             else:
 #                 logger.warning(f"最终恢复原始ID失败，通信错误: {final_verify_err}")
 #         except Exception as e:
@@ -507,14 +471,9 @@ def test_HAND_PowerOff(serial_api_instance):
     
 
 
-@pytest.mark.skip('测试设置pid，超出范围报255错误，此case暂时跳过')
+@pytest.mark.skip('测试设置finger pid，连续设置多个手指参数报错，提bug：#5722，#5723 ，先跳过')
 def test_HAND_SetFingerPID(serial_api_instance):
-    ######
-    # api.HAND_SetCommandTimeOut(500)
     """手指PID参数设置功能测试 - 单变量控制"""
-    # 定义测试常量
-    HAND_ID = 0x02
-    FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
     
     # 默认参数值
     DEFAULT_P = 250.0
@@ -570,9 +529,9 @@ def test_HAND_SetFingerPID(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in FINGERS:
+    # 定义测试常量
+        for finger_id in range(MAX_MOTOR_CNT):
             logger.info(f"\n===== 开始测试手指 {finger_id} =====")
-            delay_milli_seconds_impl(1000)
             # 测试P参数
             logger.info(f"测试手指 {finger_id} 的P参数")
             for p_value, desc in PARAM_TEST_DATA['P']:
@@ -601,6 +560,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
             logger.info(f"测试手指 {finger_id} 的I参数")
             for i_value, desc in PARAM_TEST_DATA['I']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerPID(
                     HAND_ID, finger_id, 
                     DEFAULT_P,      # P固定为默认值
@@ -623,6 +583,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
             logger.info(f"测试手指 {finger_id} 的D参数")
             for d_value, desc in PARAM_TEST_DATA['D']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err  = serial_api_instance.HAND_SetFingerPID(
                     HAND_ID, finger_id, 
                     DEFAULT_P,      # P固定为默认值
@@ -645,6 +606,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
             logger.info(f"测试手指 {finger_id} 的G参数")
             for g_value, desc in PARAM_TEST_DATA['G']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerPID(
                     HAND_ID, finger_id, 
                     DEFAULT_P,      # P固定为默认值
@@ -667,7 +629,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认PIDG值 =====")
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             remote_err = []
             delay_milli_seconds_impl(500)
             err = serial_api_instance.HAND_SetFingerPID(
@@ -683,7 +645,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
         # 发生错误时尝试恢复所有手指默认值
         try:
             logger.warning("正在尝试恢复所有手指默认值...")
-            for finger_id in FINGERS:
+            for finger_id in range(MAX_MOTOR_CNT):
                 delay_milli_seconds_impl(500)
                 serial_api_instance.HAND_SetFingerPID(
                     HAND_ID, finger_id, 
@@ -704,12 +666,8 @@ def test_HAND_SetFingerPID(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置current limit,研发端未实现，直接跳过')
+@pytest.mark.skip('测试设置current limit, 输入范围外的值不报错，已经报成功，先跳过，提bug：#5738')
 def test_HAND_SetFingerCurrentLimit(serial_api_instance):
-    # 定义测试常量
-    HAND_ID = 0x02
-    FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
-    
     # 默认参数值
     DEFAULT_CURRENT = 1299
     
@@ -731,7 +689,7 @@ def test_HAND_SetFingerCurrentLimit(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的电流限制 =====")
             
             # 测试电流限制参数
@@ -750,14 +708,14 @@ def test_HAND_SetFingerCurrentLimit(serial_api_instance):
                     test_results.append((f"手指{finger_id} 电流测试({desc})", "通过"))
                 else:  # 无效电流值
                     assert err != HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置无效电流值未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                        f"手指 {finger_id} 设置无效电流值未报错: {desc}, 错误码: err={err},remote_err={remote_err}"
                     test_results.append((f"手指{finger_id} 电流测试({desc})", "通过(预期失败)"))
             
             logger.info(f"手指 {finger_id} 电流限制测试完成")
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认电流限制 =====")
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             remote_err = []
             err = serial_api_instance.HAND_SetFingerCurrentLimit(
                 HAND_ID, finger_id, 
@@ -772,7 +730,7 @@ def test_HAND_SetFingerCurrentLimit(serial_api_instance):
         # 发生错误时尝试恢复所有手指默认值
         try:
             logger.warning("正在尝试恢复所有手指默认电流值...")
-            for finger_id in FINGERS:
+            for finger_id in range(MAX_MOTOR_CNT):
                 serial_api_instance.HAND_SetFingerCurrentLimit(
                     HAND_ID, finger_id, 
                     DEFAULT_CURRENT, []
@@ -792,12 +750,8 @@ def test_HAND_SetFingerCurrentLimit(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置force target一直报超时,此case暂时跳过')
+@pytest.mark.skip('测试设置force target，输入异常值不报错，显示设置成功，报bug:#5739,先跳过')
 def test_HAND_SetFingerForceTarget(serial_api_instance):
-    # 定义测试常量
-    HAND_ID = 0x02
-    FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
-    
     # 默认参数值
     DEFAULT_FORCE_TARGET = 0
     
@@ -807,7 +761,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
             (0,          "目标力最小值0"),
             (1,          "目标力值1"),
             (32767,      "目标力中间值32767"),
-            (65535,      "目标力最大值65535")
+            (65535,      "目标力最大值65535"),
             (-1,         "目标力边界值-1"),
             (65536,      "目标力边界值65536")
         ]
@@ -818,7 +772,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的目标力设置 =====")
             
             # 测试目标力参数
@@ -837,14 +791,14 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
                     test_results.append((f"手指{finger_id} 目标力测试({desc})", "通过"))
                 else:  # 无效目标力值
                     assert err != HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置无效目标力未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                        f"手指 {finger_id} 设置无效目标力未报错: {desc}, 错误码: err={err},remote_err={remote_err}"
                     test_results.append((f"手指{finger_id} 目标力测试({desc})", "通过(预期失败)"))
             
             logger.info(f"手指 {finger_id} 目标力设置测试完成")
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认目标力 =====")
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             remote_err = []
             err = serial_api_instance.HAND_SetFingerForceTarget(
                 HAND_ID, finger_id, 
@@ -859,7 +813,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
         # 发生错误时尝试恢复所有手指默认值
         try:
             logger.warning("正在尝试恢复所有手指默认目标力...")
-            for finger_id in FINGERS:
+            for finger_id in range(MAX_MOTOR_CNT):
                 serial_api_instance.HAND_SetFingerForceTarget(
                     HAND_ID, finger_id, 
                     DEFAULT_FORCE_TARGET, []
@@ -879,140 +833,54 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置pos limit 一直报超时,此case暂时跳过，参数少一个')
-# def test_HAND_SetFingerPosLimit(serial_api_instance):
-#     # 定义测试常量
-#     HAND_ID = 0x02
-#     FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
-    
-#     # 默认参数值（范围0-65535，默认值0）
-#     DEFAULT_POS_LIMIT = 0
-    
-#     # 定义参数的测试值(包含有效/边界/无效值)
-#     PARAM_TEST_DATA = {
-#         'pos_limit': [
-#             (0,          "目标位置最小值0"),
-#             (1,          "目标位置值1"),
-#             (32767,      "目标位置中间值32767"),
-#             (65535,      "目标位置最大值65535"),
-#             (-1,         "目标位置边界值-1"),
-#             (65536,      "目标位置边界值65536")
-#         ]
-#     }
-    
-#     # 测试结果存储
-#     test_results = []
-    
-#     try:
-#         """------------------- 单变量测试 -------------------"""
-#         for finger_id in FINGERS:
-#             logger.info(f"\n===== 开始测试手指 {finger_id} 的位置限制 =====")
-            
-#             # 测试位置限制参数
-#             for pos_limit, desc in PARAM_TEST_DATA['pos_limit']:
-#                 remote_err = []
-#                 err = serial_api_instance.HAND_SetFingerPosLimit(
-#                     HAND_ID, finger_id, 
-#                     0,
-#                     pos_limit,  # 测试变量位置限制值
-#                     remote_err
-#                 )
-                
-#                 # 验证结果
-#                 if 0 <= pos_limit <= 65535:  # 有效范围
-#                     assert err == HAND_RESP_SUCCESS, \
-#                         f"手指 {finger_id} 设置有效位置限制失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-#                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过"))
-#                 else:  # 无效值
-#                     assert err != HAND_RESP_SUCCESS, \
-#                         f"手指 {finger_id} 设置无效位置限制未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-#                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过(预期失败)"))
-            
-#             logger.info(f"手指 {finger_id} 位置限制测试完成")
-        
-#         """------------------- 恢复默认值 -------------------"""
-#         logger.info("\n===== 恢复所有手指的默认位置限制 =====")
-#         for finger_id in FINGERS:
-#             remote_err = []
-#             err, remote_err = serial_api_instance.HAND_SetFingerPosLimit(
-#                 HAND_ID, finger_id, 
-#                  0,
-#                 DEFAULT_POS_LIMIT,  # 恢复默认值
-#                 remote_err
-#             )
-#             assert err == HAND_RESP_SUCCESS, \
-#                 f"恢复手指 {finger_id} 默认位置限制失败, 错误码: err={err},remote_err={remote_err[0]}"
-#             logger.info(f"手指 {finger_id} 已恢复默认位置限制: {DEFAULT_POS_LIMIT}")
-    
-#     except AssertionError as e:
-#         logger.error(f"测试失败: {str(e)}")
-#         # 发生错误时尝试恢复所有手指默认值
-#         try:
-#             logger.warning("正在尝试恢复所有手指默认位置限制...")
-#             for finger_id in FINGERS:
-#                 serial_api_instance.HAND_SetFingerPosLimit(
-#                     HAND_ID, finger_id, 
-#                      0,
-#                     DEFAULT_POS_LIMIT, 
-#                     []
-#                 )
-#         except Exception as recovery_err:
-#             logger.error(f"恢复默认位置限制失败: {str(recovery_err)}")
-#         raise  # 重新抛出原始错误
-    
-#     finally:
-#         """------------------- 测试结果汇总 -------------------"""
-#         logger.info("\n===== 位置限制测试结果汇总 =====")
-#         passed = sum(1 for case, result in test_results if "通过" in result)
-#         total = len(test_results)
-#         logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
-        
-#         for case, result in test_results:
-#             logger.info(f"{case}: {result}")
-#         logger.info("=======================")
+@pytest.mark.skip('测试设置pos limit, 连续测试多个手指，报无效值错误，提bug: #5738,先跳过')
 def test_HAND_SetFingerPosLimit(serial_api_instance):
     # 定义测试常量
-    HAND_ID = 0x02
-    FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
-    
-    # 默认参数值（范围0-65535，默认值0）
-    DEFAULT_POS_LIMIT = 0
-    
     end_pos = [0] * MAX_MOTOR_CNT
     start_pos = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
     thumb_root_pos = [0] * MAX_THUMB_ROOT_POS
     thumb_root_pos_cnt = [3]  # 初始请求3个拇指根位置数据
-    err, end_pos_get, start_pos_get, thumb_root_pos_get = serial_api_instance.HAND_GetCaliData(HAND_ID, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, [])
-    
-    # 定义参数的测试值(包含有效/边界/无效值)
-    PARAM_TEST_DATA = {
-        'pos_limit': [
-            # 有效范围测试
-            (start_pos_get, end_pos_get, "正常范围"),
-            (start_pos_get, start_pos_get, "下限等于上限"),
-            (start_pos_get, start_pos_get + 1, "下限接近上限"),
-            (0, 65535, "最大有效范围"),
-            
-            # 无效范围测试
-            (end_pos_get, start_pos_get, "下限大于上限"),
-            (-1, 100, "下限为负数"),
-            (100, 65536, "上限超出范围"),
-            (-1, 65536, "上下限都无效")
-        ]
-    }
-    
+    # 获取每个手指的校准数据（列表类型，索引对应finger_id）
+    delay_milli_seconds_impl(5000)
+    err, end_pos_get, start_pos_get, thumb_root_pos_get = serial_api_instance.HAND_GetCaliData(
+        HAND_ID, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, []
+    )
+    assert err == HAND_RESP_SUCCESS, f"获取矫正数据失败: {err}"  # 确保数据获取成功
+
     # 测试结果存储
     test_results = []
-    
+    print(f'start_pos_get={start_pos_get} \n end_pos_get={end_pos_get}')
     try:
-        """------------------- 单变量测试 -------------------"""
-        for finger_id in FINGERS:
+        """------------------- 按手指逐个测试 -------------------"""
+        for finger_id in range(MAX_MOTOR_CNT):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的位置限制 =====")
+            delay_milli_seconds_impl(10000)
+            # 获取当前手指的起始/结束位置（从列表中提取单个值）
+            current_start = start_pos_get[finger_id]
+            current_end = end_pos_get[finger_id]
+    
+            # 定义当前手指的测试数据（基于该手指的实际校准值）
+            param_test_data = {
+                'pos_limit': [
+                    # 有效范围测试
+                    (current_start, current_end, "正常范围"),
+                    (current_start, current_start, "下限等于上限"),
+                    (current_start, current_start + 1, "下限接近上限"),  # 单个值相加
+                   
+                    # 无效范围测试
+                     (0, 65535, "取全部范围"),
+                    (current_end, current_start, "下限大于上限"),
+                    (-1, 100, "下限为负数"),
+                    (100, 65536, "上限超出范围"),
+                    (-1, 65536, "上下限都无效")
+                ]
+            }
             
-            # 测试位置限制参数
-            for min_pos, max_pos, desc in PARAM_TEST_DATA['pos_limit']:
+            # 测试当前手指的位置限制参数
+            for min_pos, max_pos, desc in param_test_data['pos_limit']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerPosLimit(
                     HAND_ID, finger_id, 
                     min_pos,  # 下限
@@ -1020,26 +888,30 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
                     remote_err
                 )
                 
-                # 验证结果
-                if start_pos_get <= min_pos <= max_pos <= end_pos_get:  # 有效范围
+                # 验证结果（基于当前手指的有效范围）
+                if current_start <= min_pos <= max_pos <= current_end and min_pos <= max_pos:
+                    # 有效范围：上下限在0-65535之间，且下限<=上限
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效位置限制失败: {desc}, 错误码: err={err}, remote_err={remote_err[0]}"
                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过"))
-                else:  # 无效值
+                else:
+                    # 无效范围：超出边界或下限>上限
                     assert err != HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置无效位置限制未报错: {desc}, 错误码: err={err}, remote_err={remote_err[0]}"
+                        f"手指 {finger_id} 设置无效位置限制未报错: {desc}, 错误码: err={err}, remote_err={remote_err}"
                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过(预期失败)"))
             
             logger.info(f"手指 {finger_id} 位置限制测试完成")
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认位置限制 =====")
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             remote_err = []
+            # 恢复当前手指的默认限制（使用该手指的校准值）
+            delay_milli_seconds_impl(500)
             err = serial_api_instance.HAND_SetFingerPosLimit(
                 HAND_ID, finger_id, 
-                start_pos_get,  # 恢复默认下限
-                end_pos_get,  # 恢复默认上限
+                start_pos_get[finger_id],  # 单个手指的起始位置
+                end_pos_get[finger_id],    # 单个手指的结束位置
                 remote_err
             )
             assert err == HAND_RESP_SUCCESS, \
@@ -1051,11 +923,12 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
         # 发生错误时尝试恢复所有手指默认值
         try:
             logger.warning("正在尝试恢复所有手指默认位置限制...")
-            for finger_id in FINGERS:
+            for finger_id in range(MAX_MOTOR_CNT):
+                delay_milli_seconds_impl(500)
                 serial_api_instance.HAND_SetFingerPosLimit(
                     HAND_ID, finger_id, 
-                    start_pos_get, 
-                    end_pos_get, 
+                    start_pos_get[finger_id], 
+                    end_pos_get[finger_id], 
                     []
                 )
         except Exception as recovery_err:
@@ -1073,51 +946,66 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('单独跑测试是可以通过')
+# @pytest.mark.skip('单独跑测试是可以通过')
 def test_HAND_FingerStart(serial_api_instance):
-    hand_id = 0x02
     finger_id_bits = 0x01
     remote_err = []
-
-    err = serial_api_instance.HAND_FingerStart(hand_id, finger_id_bits, remote_err)
+    delay_milli_seconds_impl(5000)
+    err = serial_api_instance.HAND_FingerStart(HAND_ID, finger_id_bits, remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置开始移动手指失败，错误码: err={err},remote_err={remote_err[0]}"
     logger.info(f'设置开始移动手指成功')
     
-@pytest.mark.skip('单独跑测试是可以通过')
+# @pytest.mark.skip('单独跑测试是可以通过')
 def test_HAND_FingerStop(serial_api_instance):
-    hand_id = 0x02
     finger_id_bits = 0x01
     remote_err = []
-
-    err = serial_api_instance.HAND_FingerStop(hand_id, finger_id_bits, remote_err)
+    delay_milli_seconds_impl(5000)
+    err = serial_api_instance.HAND_FingerStop(HAND_ID, finger_id_bits, remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置停止移动手指失败，错误码: err={err},remote_err={remote_err[0]}"
     logger.info(f'设置停止移动手指成功')
 
-@pytest.mark.skip('测试设置finger pos abs 一直报超时,此case暂时跳过')
-def test_HAND_SetFingerPosAbs(serial_api_instance):
+@pytest.mark.skip('测试设置finger pos abs all ,raw_pos异常值不报错,speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常, 提bug:#5741,先跳过')
+def test_HAND_SetFingerPosAbsAll(serial_api_instance):
     # 定义测试常量
     HAND_ID = 0x02
-    FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
+    MAX_MOTORS = 6  # 假设手有6个手指
     
-    # 默认参数值（速度范围调整为0-65535）
-    DEFAULT_POS = 0
-    DEFAULT_SPEED = 127  # 速度默认值调整为32767
+    # 默认参数值
+    DEFAULT_POS = 0     # 位置默认值
+    DEFAULT_SPEED = 127   # 速度默认值
+    
+    # 定义测试常量
+    end_pos = [0] * MAX_MOTOR_CNT
+    start_pos = [0] * MAX_MOTOR_CNT
+    motor_cnt = [MAX_MOTOR_CNT]
+    thumb_root_pos = [0] * MAX_THUMB_ROOT_POS
+    thumb_root_pos_cnt = [3]  # 初始请求3个拇指根位置数据
+    # 获取每个手指的校准数据（列表类型，索引对应finger_id）
+    delay_milli_seconds_impl(5000)
+    err, end_pos_get, start_pos_get, thumb_root_pos_get = serial_api_instance.HAND_GetCaliData(
+        HAND_ID, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, []
+    )
+    # 增加断言，确保校准数据获取成功
+    assert err == HAND_RESP_SUCCESS, f"获取校准数据失败: err={err}"
     
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
-        'raw_pos': [
-            (0,       "手指绝对位置最小值0"),
-            (32767,   "手指绝对位置中间值32767"),
-            (65535,   "手指绝对位置最大值65535"),
-            (-1,      "手指绝对位置边界值-1"),
-            (65536,   "手指绝对位置边界值65536")
+        'pos_abs_all': [
+            (start_pos_get,       f"所有手指绝对位置最小值{start_pos_get}"),
+            (end_pos_get,         f"所有手指绝对位置最大值{end_pos_get}"),
+            # 修复：无效的列表构造
+            ([0]*MAX_MOTORS,      f"所有手指绝对位置边界值{[0]*MAX_MOTORS}"),
+            ([65535]*MAX_MOTORS,      f"所有手指绝对位置边界值{[65535]*MAX_MOTORS}"),
+            ([-1]*MAX_MOTORS,     f"所有手指绝对位置边界值{[-1]*MAX_MOTORS}"),
+            ([65536] * MAX_MOTORS,   "所有手指绝对位置边界值65536"),
         ],
         'speed': [
-            (0,       "手指移动速度最小值0"),
-            (127,     "手指移动速度中间值127"),
-            (255,     "手指移动速度最大值255"),
-            (-1,      "手指移动速度边界值-1"),
-            (256,     "手指移动速度边界值256")
+            ([0]*MAX_MOTORS,       "手指移动速度最小值0"),
+            ([127]*MAX_MOTORS,     "手指移动速度中间值127"),
+            ([255]*MAX_MOTORS,     "手指移动速度最大值255"),
+            # 修复：无效的列表构造
+            ([-1]*MAX_MOTORS,      "手指移动速度边界值-1"),
+            ([256]*MAX_MOTORS,     "手指移动速度边界值256")
         ]
     }
     
@@ -1126,84 +1014,93 @@ def test_HAND_SetFingerPosAbs(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in FINGERS:
-            logger.info(f"\n===== 开始测试手指 {finger_id} 的绝对位置设置 =====")
+        logger.info(f"\n===== 开始批量设置手指绝对位置测试 =====")
+        
+        # 测试位置参数（固定速度为默认值）
+        logger.info(f"测试位置参数")
+        for pos, desc in PARAM_TEST_DATA['pos_abs_all']:
+            speed_array = [DEFAULT_SPEED] * MAX_MOTORS
+            remote_err = []
+            delay_milli_seconds_impl(500)
+            err = serial_api_instance.HAND_SetFingerPosAbsAll(
+                HAND_ID, pos, speed_array, MAX_MOTORS, remote_err
+            )
             
-            # 测试位置参数（固定速度为默认值）
-            logger.info(f"测试手指 {finger_id} 的位置参数")
-            for raw_pos, desc in PARAM_TEST_DATA['raw_pos']:
-                remote_err = []
-                err = serial_api_instance.HAND_SetFingerPosAbs(
-                    HAND_ID, finger_id, 
-                    raw_pos,      # 测试变量位置值
-                    DEFAULT_SPEED,  # 速度固定为默认值
-                    remote_err
-                )
-                
-                # 验证结果
-                if 0 <= raw_pos <= 65535:  # 有效位置范围
-                    assert err == HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置有效位置失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                    test_results.append((f"手指{finger_id} 位置测试({desc})", "通过"))
-                else:  # 无效位置值
-                    assert err != HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                    test_results.append((f"手指{finger_id} 位置测试({desc})", "通过(预期失败)"))
+            # 修复：检查所有位置值的有效性
+            # 假设所有手指的有效范围与第一个手指相同
+           # 修正：按索引对应验证每个手指的位置有效性
+            is_all_pos_valid = all(
+                start_pos_get[i] <= pos[i] <= end_pos_get[i] 
+                for i in range(len(pos))
+            )
             
-            # 测试速度参数（固定位置为默认值）
-            logger.info(f"测试手指 {finger_id} 的速度参数")
-            for speed, desc in PARAM_TEST_DATA['speed']:
-                remote_err = []
-                err = serial_api_instance.HAND_SetFingerPosAbs(
-                    HAND_ID, finger_id, 
-                    DEFAULT_POS,  # 位置固定为默认值
-                    speed,        # 测试变量速度值
-                    remote_err
-                )
-                
-                # 验证结果
-                if 0 <= speed <= 255:  # 有效速度范围
-                    assert err == HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置有效速度失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                    test_results.append((f"手指{finger_id} 速度测试({desc})", "通过"))
-                else:  # 无效速度值
-                    assert err != HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置无效速度未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                    test_results.append((f"手指{finger_id} 速度测试({desc})", "通过(预期失败)"))
+            if is_all_pos_valid:  # 所有手指的位置都在各自的有效范围
+                assert err == HAND_RESP_SUCCESS, \
+                    f"设置有效位置失败: {desc}, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
+                test_results.append((f"位置测试({desc})", "通过"))
+            else:  # 至少有一个手指的位置无效
+                assert err != HAND_RESP_SUCCESS, \
+                    f"设置无效位置未报错: {desc}, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
+                test_results.append((f"位置测试({desc})", "通过(预期失败)"))
+        
+        # 测试速度参数（固定位置为默认值）
+        logger.info(f"测试速度参数")
+        for speed, desc in PARAM_TEST_DATA['speed']:
+            pos_array = [DEFAULT_POS] * MAX_MOTORS
+            remote_err = []
+            delay_milli_seconds_impl(500)
+            err = serial_api_instance.HAND_SetFingerPosAbsAll(
+                HAND_ID, pos_array, speed, MAX_MOTORS, remote_err
+            )
             
-            logger.info(f"手指 {finger_id} 绝对位置设置测试完成")
+            # 同样，建议检查所有速度值的有效性
+            is_all_speed_valid = all(0 <= s <= 255 for s in speed)
+            if is_all_speed_valid:  # 有效速度范围
+                assert err == HAND_RESP_SUCCESS, \
+                    f"设置有效速度失败: {desc}, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
+                test_results.append((f"速度测试({desc})", "通过"))
+            else:  # 无效速度值
+                assert err != HAND_RESP_SUCCESS, \
+                    f"设置无效速度未报错: {desc}, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
+                test_results.append((f"速度测试({desc})", "通过(预期失败)"))
+        
+        logger.info(f"批量设置手指绝对位置测试完成")
         
         """------------------- 恢复默认值 -------------------"""
-        logger.info("\n===== 恢复所有手指的默认位置 =====")
-        for finger_id in FINGERS:
-            remote_err = []
-            err = serial_api_instance.HAND_SetFingerPosAbs(
-                HAND_ID, finger_id, 
-                DEFAULT_POS, DEFAULT_SPEED,  # 恢复默认位置和速度
-                remote_err
-            )
-            assert err == HAND_RESP_SUCCESS, \
-                f"恢复手指 {finger_id} 默认位置失败, 错误码: err={err},remote_err={remote_err[0]}"
-            logger.info(f"手指 {finger_id} 已恢复默认位置: {DEFAULT_POS}, 速度: {DEFAULT_SPEED}")
+        logger.info("\n===== 恢复所有手指默认位置 =====")
+        remote_err = []
+        delay_milli_seconds_impl(500)
+        err = serial_api_instance.HAND_SetFingerPosAbsAll(
+            HAND_ID, 
+            [DEFAULT_POS] * MAX_MOTORS,
+            [DEFAULT_SPEED] * MAX_MOTORS,
+            MAX_MOTORS,
+            remote_err
+        )
+        assert err == HAND_RESP_SUCCESS, \
+            f"恢复默认位置失败, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
+        logger.info(f"所有手指已恢复默认位置: {DEFAULT_POS}, 速度: {DEFAULT_SPEED}")
     
     except AssertionError as e:
         logger.error(f"测试失败: {str(e)}")
-        # 发生错误时尝试恢复所有手指默认值
+        # 发生错误时尝试恢复默认值
         try:
             logger.warning("正在尝试恢复所有手指默认位置...")
-            for finger_id in FINGERS:
-                serial_api_instance.HAND_SetFingerPosAbs(
-                    HAND_ID, finger_id, 
-                    DEFAULT_POS, DEFAULT_SPEED, 
-                    []
-                )
+            delay_milli_seconds_impl(500)
+            serial_api_instance.HAND_SetFingerPosAbsAll(
+                HAND_ID, 
+                [DEFAULT_POS] * MAX_MOTORS,
+                [DEFAULT_SPEED] * MAX_MOTORS,
+                MAX_MOTORS,
+                []
+            )
         except Exception as recovery_err:
             logger.error(f"恢复默认位置失败: {str(recovery_err)}")
         raise  # 重新抛出原始错误
     
     finally:
         """------------------- 测试结果汇总 -------------------"""
-        logger.info("\n===== 绝对位置设置测试结果汇总 =====")
+        logger.info("\n===== 批量设置手指绝对位置测试结果汇总 =====")
         passed = sum(1 for case, result in test_results if "通过" in result)
         total = len(test_results)
         logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
@@ -1212,16 +1109,12 @@ def test_HAND_SetFingerPosAbs(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置finger pos 一直报超时,此case暂时跳过')
+@pytest.mark.skip('测试设置finger pos：raw_pos异常值不报错,speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常, 提bug:#5741,先跳过')
 def test_HAND_SetFingerPos(serial_api_instance):
-    # 定义测试常量
-    HAND_ID = 0x02
-    FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
-    
     # 默认参数值
     DEFAULT_POS = 0     # 位置默认值
     DEFAULT_SPEED = 127   # 速度默认值32767
-    
+    delay_milli_seconds_impl(5000)
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'pos': [
@@ -1245,13 +1138,14 @@ def test_HAND_SetFingerPos(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的相对位置设置 =====")
             
             # 测试位置参数（固定速度为默认值）
             logger.info(f"测试手指 {finger_id} 的位置参数")
             for pos, desc in PARAM_TEST_DATA['pos']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerPos(
                     HAND_ID, finger_id, 
                     pos,          # 测试变量位置值
@@ -1266,13 +1160,14 @@ def test_HAND_SetFingerPos(serial_api_instance):
                     test_results.append((f"手指{finger_id} 位置测试({desc})", "通过"))
                 else:  # 无效位置值
                     assert err != HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                        f"手指 {finger_id} 设置无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err}"
                     test_results.append((f"手指{finger_id} 位置测试({desc})", "通过(预期失败)"))
             
             # 测试速度参数（固定位置为默认值）
             logger.info(f"测试手指 {finger_id} 的速度参数")
             for speed, desc in PARAM_TEST_DATA['speed']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerPos(
                     HAND_ID, finger_id, 
                     DEFAULT_POS,  # 位置固定为默认值
@@ -1287,15 +1182,16 @@ def test_HAND_SetFingerPos(serial_api_instance):
                     test_results.append((f"手指{finger_id} 速度测试({desc})", "通过"))
                 else:  # 无效速度值
                     assert err != HAND_RESP_SUCCESS, \
-                        f"手指 {finger_id} 设置无效速度未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                        f"手指 {finger_id} 设置无效速度未报错: {desc}, 错误码: err={err},remote_err={remote_err}"
                     test_results.append((f"手指{finger_id} 速度测试({desc})", "通过(预期失败)"))
             
             logger.info(f"手指 {finger_id} 相对位置设置测试完成")
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认位置 =====")
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             remote_err = []
+            delay_milli_seconds_impl(500)
             err = serial_api_instance.HAND_SetFingerPos(
                 HAND_ID, finger_id, 
                 DEFAULT_POS, DEFAULT_SPEED,  # 恢复默认位置和速度
@@ -1310,7 +1206,8 @@ def test_HAND_SetFingerPos(serial_api_instance):
         # 发生错误时尝试恢复所有手指默认值
         try:
             logger.warning("正在尝试恢复所有手指默认位置...")
-            for finger_id in FINGERS:
+            for finger_id in range(MAX_MOTOR_CNT):
+                delay_milli_seconds_impl(500)
                 serial_api_instance.HAND_SetFingerPos(
                     HAND_ID, finger_id, 
                     DEFAULT_POS, DEFAULT_SPEED, 
@@ -1330,13 +1227,135 @@ def test_HAND_SetFingerPos(serial_api_instance):
         for case, result in test_results:
             logger.info(f"{case}: {result}")
         logger.info("=======================")
+        
+@pytest.mark.skip('测试设置finger pos all，pos异常值不报错，speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常')
+def test_HAND_SetFingerPosAll(serial_api_instance):
+    # 定义测试常量
+    # 默认参数值
+    MAX_MOTORS = 6
+    DEFAULT_POS = 0     # 位置默认值
+    DEFAULT_SPEED = 127   # 速度默认值
+    delay_milli_seconds_impl(5000)
+    # 定义各参数的测试值(包含有效/边界/无效值)
+    PARAM_TEST_DATA = {
+        'pos_all': [
+            ([0]*MAX_MOTORS,      f"所有手指绝对位置边界值{[0]*MAX_MOTORS}"),
+            ([65535]*MAX_MOTORS,      f"所有手指绝对位置边界值{[65535]*MAX_MOTORS}"),
+             # 修复：无效的列表构造
+            # ([-1]*MAX_MOTORS,     f"所有手指绝对位置边界值{[-1]*MAX_MOTORS}"),
+            # ([65536] * MAX_MOTORS,   "所有手指绝对位置边界值65536"),
+        ],
+       'speed': [
+            ([0]*MAX_MOTORS,       "手指移动速度最小值0"),
+            ([127]*MAX_MOTORS,     "手指移动速度中间值127"),
+            ([255]*MAX_MOTORS,     "手指移动速度最大值255"),
+            # 修复：无效的列表构造
+            ([-1]*MAX_MOTORS,      "手指移动速度边界值-1"),
+            ([256]*MAX_MOTORS,     "手指移动速度边界值256")
+        ]
+    }
+    
+    # 测试结果存储
+    test_results = []
+    
+    try:
+        """------------------- 单变量测试 -------------------"""
+        logger.info(f"\n===== 开始批量设置手指相对位置测试 =====")
+        
+        # 测试位置参数（固定速度为默认值）
+        logger.info(f"测试位置参数")
+        for pos, desc in PARAM_TEST_DATA['pos_all']:
+            # 生成统一位置数组
+            speed_array = [DEFAULT_SPEED] * MAX_MOTOR_CNT
+            remote_err = []
+            delay_milli_seconds_impl(500)
+            err = serial_api_instance.HAND_SetFingerPosAll(
+                HAND_ID, pos, speed_array, MAX_MOTOR_CNT, remote_err
+            )
+            
+            # 验证结果
+            is_all_pos_valid = all(
+                0 <= pos[i] <= 65535 
+                for i in range(len(pos))
+            )
+            if is_all_pos_valid:  # 有效位置范围
+                assert err == HAND_RESP_SUCCESS, \
+                    f"设置有效位置失败: {desc}, 错误码:err={err},remote_err={remote_err[0]}"
+                test_results.append((f"位置测试({desc})", "通过"))
+            else:  # 无效位置值
+                assert err != HAND_RESP_SUCCESS, \
+                    f"设置无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err}"
+                test_results.append((f"位置测试({desc})", "通过(预期失败)"))
+        
+        # 测试速度参数（固定位置为默认值）
+        logger.info(f"测试速度参数")
+        for speed, desc in PARAM_TEST_DATA['speed']:
+            # 生成统一速度数组
+            pos_array = [DEFAULT_POS] * MAX_MOTOR_CNT
+            remote_err = []
+            delay_milli_seconds_impl(500)
+            err = serial_api_instance.HAND_SetFingerPosAll(
+                HAND_ID, pos_array, speed, MAX_MOTOR_CNT, remote_err
+            )
+            
+            # 验证结果
+            is_all_speed_valid = all(0 <= s <= 255 for s in speed)
+            if is_all_speed_valid:  # 有效速度范围
+                assert err == HAND_RESP_SUCCESS, \
+                    f"设置有效速度失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                test_results.append((f"速度测试({desc})", "通过"))
+            else:  # 无效速度值
+                assert err != HAND_RESP_SUCCESS, \
+                    f"设置无效速度未报错: {desc}, 错误码: err={err},remote_err={remote_err}"
+                test_results.append((f"速度测试({desc})", "通过(预期失败)"))
+        
+        logger.info(f"批量设置手指相对位置测试完成")
+        
+        """------------------- 恢复默认值 -------------------"""
+        logger.info("\n===== 恢复所有手指默认位置 =====")
+        remote_err = []
+        delay_milli_seconds_impl(500)
+        err = serial_api_instance.HAND_SetFingerPosAll(
+            HAND_ID, 
+            [DEFAULT_POS] * MAX_MOTOR_CNT,
+            [DEFAULT_SPEED] * MAX_MOTOR_CNT,
+            MAX_MOTOR_CNT,
+            remote_err
+        )
+        assert err == HAND_RESP_SUCCESS, \
+            f"恢复默认位置失败, 错误码: err={err},remote_err={remote_err[0]}"
+        logger.info(f"所有手指已恢复默认位置: {DEFAULT_POS}, 速度: {DEFAULT_SPEED}")
+    
+    except AssertionError as e:
+        logger.error(f"测试失败: {str(e)}")
+        # 发生错误时尝试恢复默认值
+        try:
+            logger.warning("正在尝试恢复所有手指默认位置...")
+            delay_milli_seconds_impl(500)
+            serial_api_instance.HAND_SetFingerPosAll(
+                HAND_ID, 
+                [DEFAULT_POS] * MAX_MOTOR_CNT,
+                [DEFAULT_SPEED] * MAX_MOTOR_CNT,
+                MAX_MOTOR_CNT,
+                []
+            )
+        except Exception as recovery_err:
+            logger.error(f"恢复默认位置失败: {str(recovery_err)}")
+        raise  # 重新抛出原始错误
+    
+    finally:
+        """------------------- 测试结果汇总 -------------------"""
+        logger.info("\n===== 批量设置手指相对位置测试结果汇总 =====")
+        passed = sum(1 for case, result in test_results if "通过" in result)
+        total = len(test_results)
+        logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
+        
+        for case, result in test_results:
+            logger.info(f"{case}: {result}")
+        logger.info("=======================")
 
 @pytest.mark.skip('测试设置finger angle 一直报超时,此case暂时跳过')
-def test_HAND_SetFingerAngle(serial_api_instance):
-    # 定义测试常量
-    HAND_ID = 0x02
-    FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
-    
+def test_HAND_SetFingerAngle(serial_api_instance):    
     # 默认参数值
     DEFAULT_ANGLE = 0     # 角度默认值
     DEFAULT_SPEED = 127     # 速度默认值
@@ -1366,7 +1385,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的角度设置 =====")
             
             # 测试角度参数（固定速度为默认值）
@@ -1379,7 +1398,8 @@ def test_HAND_SetFingerAngle(serial_api_instance):
                     DEFAULT_SPEED,  # 速度固定为默认值
                     remote_err
                 )
-                
+                target_angle, current_angle = [0], [0]
+                serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle, current_angle, [])
                 # 验证结果
                 if 0 <= angle <= 65535:  # 有效角度范围
                     assert err == HAND_RESP_SUCCESS, \
@@ -1415,7 +1435,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认角度 =====")
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             remote_err = []
             err = serial_api_instance.HAND_SetFingerAngle(
                 HAND_ID, finger_id, 
@@ -1431,7 +1451,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
         # 发生错误时尝试恢复所有手指默认值
         try:
             logger.warning("正在尝试恢复所有手指默认角度...")
-            for finger_id in FINGERS:
+            for finger_id in range(MAX_MOTOR_CNT):
                 serial_api_instance.HAND_SetFingerAngle(
                     HAND_ID, finger_id, 
                     DEFAULT_ANGLE, DEFAULT_SPEED, 
@@ -1451,372 +1471,10 @@ def test_HAND_SetFingerAngle(serial_api_instance):
         for case, result in test_results:
             logger.info(f"{case}: {result}")
         logger.info("=======================")
-
-@pytest.mark.skip('测试设置thumb root pos 一直报超时,此case暂时跳过')
-def test_HAND_SetThumbRootPos(serial_api_instance):
-    # 定义测试常量
-    HAND_ID = 0x02
-    
-    # 默认参数值
-    DEFAULT_POS = 0     # 位置默认值（合法值：0, 1, 2）
-    DEFAULT_SPEED = 127   # 速度默认值（范围：0-255）
-    
-    # 定义各参数的测试值(包含有效/边界/无效值)
-    PARAM_TEST_DATA = {
-        'thumb_root_pos': [
-            (0,     "旋转大拇指到预设位置值0"),
-            (1,     "旋转大拇指到预设位置值1"),
-            (2,     "旋转大拇指到预设位置值2"),
-            (-1,    "旋转大拇指到预设位置边界值-1"),
-            (3,     "旋转大拇指到预设位置边界值3"),
-        ],
-        'speed': [
-            (0,       "手指移动速度最小值0"),
-            (127,     "手指移动速度中间值127"),
-            (255,     "手指移动速度最大值255"),
-            (-1,      "手指移动速度边界值-1"),
-            (256,     "手指移动速度边界值256")
-        ]
-    }
-    
-    # 测试结果存储
-    test_results = []
-    
-    try:
-        """------------------- 单变量测试 -------------------"""
-        logger.info(f"\n===== 开始测试拇指根部位置设置 =====")
         
-        # 测试位置参数（固定速度为默认值）
-        logger.info(f"测试拇指根部位置参数")
-        for pos, desc in PARAM_TEST_DATA['thumb_root_pos']:
-            remote_err = []
-            err = serial_api_instance.HAND_SetThumbRootPos(
-                HAND_ID, 
-                pos,              # 测试变量位置值
-                DEFAULT_SPEED,    # 速度固定为默认值
-                remote_err
-            )
-            
-            # 验证结果
-            if pos in [0, 1, 2]:  # 有效位置范围
-                assert err == HAND_RESP_SUCCESS, \
-                    f"设置拇指根部有效位置失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"拇指根部位置测试({desc})", "通过"))
-            else:  # 无效位置值
-                assert err != HAND_RESP_SUCCESS, \
-                    f"设置拇指根部无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"拇指根部位置测试({desc})", "通过(预期失败)"))
-        
-        # 测试速度参数（固定位置为默认值）
-        logger.info(f"测试拇指根部速度参数")
-        for speed, desc in PARAM_TEST_DATA['speed']:
-            remote_err = []
-            err = serial_api_instance.HAND_SetThumbRootPos(
-                HAND_ID, 
-                DEFAULT_POS,      # 位置固定为默认值
-                speed,            # 测试变量速度值
-                remote_err
-            )
-            
-            # 验证结果
-            if 0 <= speed <= 255:  # 有效速度范围
-                assert err == HAND_RESP_SUCCESS, \
-                    f"设置拇指根部有效速度失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"拇指根部速度测试({desc})", "通过"))
-            else:  # 无效速度值
-                assert err != HAND_RESP_SUCCESS, \
-                    f"设置拇指根部无效速度未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"拇指根部速度测试({desc})", "通过(预期失败)"))
-        
-        logger.info(f"拇指根部位置设置测试完成")
-        
-        """------------------- 恢复默认值 -------------------"""
-        logger.info("\n===== 恢复拇指根部默认位置 =====")
-        remote_err = []
-        err = serial_api_instance.HAND_SetThumbRootPos(
-            HAND_ID, 
-            DEFAULT_POS, DEFAULT_SPEED,  # 恢复默认位置和速度
-            remote_err
-        )
-        assert err == HAND_RESP_SUCCESS, \
-            f"恢复拇指根部默认位置失败, 错误码: err={err},remote_err={remote_err[0]}"
-        logger.info(f"拇指根部已恢复默认位置: {DEFAULT_POS}, 速度: {DEFAULT_SPEED}")
-    
-    except AssertionError as e:
-        logger.error(f"测试失败: {str(e)}")
-        # 发生错误时尝试恢复默认值
-        try:
-            logger.warning("正在尝试恢复拇指根部默认位置...")
-            serial_api_instance.HAND_SetThumbRootPos(
-                HAND_ID, 
-                DEFAULT_POS, DEFAULT_SPEED, 
-                []
-            )
-        except Exception as recovery_err:
-            logger.error(f"恢复默认位置失败: {str(recovery_err)}")
-        raise  # 重新抛出原始错误
-    
-    finally:
-        """------------------- 测试结果汇总 -------------------"""
-        logger.info("\n===== 拇指根部位置设置测试结果汇总 =====")
-        passed = sum(1 for case, result in test_results if "通过" in result)
-        total = len(test_results)
-        logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
-        
-        for case, result in test_results:
-            logger.info(f"{case}: {result}")
-        logger.info("=======================")
-
-@pytest.mark.skip('测试设置finger pos abs all一直报超时,此case暂时跳过')
-def test_HAND_SetFingerPosAbsAll(serial_api_instance):
-    # 定义测试常量
-    HAND_ID = 0x02
-    MAX_MOTORS = 6  # 假设手有6个手指
-    
-    # 默认参数值
-    DEFAULT_POS = 0     # 位置默认值
-    DEFAULT_SPEED = 127   # 速度默认值
-    
-    # 定义各参数的测试值(包含有效/边界/无效值)
-    PARAM_TEST_DATA = {
-        'pos_abs_all': [
-            (0,       "所有手指绝对位置最小值0"),
-            (32767,   "所有手指绝对位置中间值32767"),
-            (65535,   "所有手指绝对位置最大值65535"),
-            (-1,      "所有手指绝对位置边界值-1"),
-            (65536,   "所有手指绝对位置边界值65536"),
-        ],
-        'speed': [
-            (0,       "手指移动速度最小值0"),
-            (127,     "手指移动速度中间值127"),
-            (255,     "手指移动速度最大值255"),
-            (-1,      "手指移动速度边界值-1"),
-            (256,     "手指移动速度边界值256")
-        ]
-    }
-    
-    # 测试结果存储
-    test_results = []
-    
-    try:
-        """------------------- 单变量测试 -------------------"""
-        logger.info(f"\n===== 开始批量设置手指绝对位置测试 =====")
-        
-        # 测试位置参数（固定速度为默认值）
-        logger.info(f"测试位置参数")
-        for pos, desc in PARAM_TEST_DATA['pos_abs_all']:
-            # 生成统一位置数组
-            pos_array = [pos] * MAX_MOTORS
-            speed_array = [DEFAULT_SPEED] * MAX_MOTORS
-            remote_err = []
-            
-            err = serial_api_instance.HAND_SetFingerPosAbsAll(
-                HAND_ID, pos_array, speed_array, MAX_MOTORS, remote_err
-            )
-            
-            # 验证结果
-            if 0 <= pos <= 65535:  # 有效位置范围
-                assert err == HAND_RESP_SUCCESS, \
-                    f"设置有效位置失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"位置测试({desc})", "通过"))
-            else:  # 无效位置值
-                assert err != HAND_RESP_SUCCESS, \
-                    f"设置无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"位置测试({desc})", "通过(预期失败)"))
-        
-        # 测试速度参数（固定位置为默认值）
-        logger.info(f"测试速度参数")
-        for speed, desc in PARAM_TEST_DATA['speed']:
-            # 生成统一速度数组
-            pos_array = [DEFAULT_POS] * MAX_MOTORS
-            speed_array = [speed] * MAX_MOTORS
-            remote_err = []
-            
-            err = serial_api_instance.HAND_SetFingerPosAbsAll(
-                HAND_ID, pos_array, speed_array, MAX_MOTORS, remote_err
-            )
-            
-            # 验证结果
-            if 0 <= speed <= 255:  # 有效速度范围
-                assert err == HAND_RESP_SUCCESS, \
-                    f"设置有效速度失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"速度测试({desc})", "通过"))
-            else:  # 无效速度值
-                assert err != HAND_RESP_SUCCESS, \
-                    f"设置无效速度未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"速度测试({desc})", "通过(预期失败)"))
-        
-        logger.info(f"批量设置手指绝对位置测试完成")
-        
-        """------------------- 恢复默认值 -------------------"""
-        logger.info("\n===== 恢复所有手指默认位置 =====")
-        remote_err = []
-        
-        err = serial_api_instance.HAND_SetFingerPosAbsAll(
-            HAND_ID, 
-            [DEFAULT_POS] * MAX_MOTORS,
-            [DEFAULT_SPEED] * MAX_MOTORS,
-            MAX_MOTORS,
-            remote_err
-        )
-        assert err == HAND_RESP_SUCCESS, \
-            f"恢复默认位置失败, 错误码: err={err},remote_err={remote_err[0]}"
-        logger.info(f"所有手指已恢复默认位置: {DEFAULT_POS}, 速度: {DEFAULT_SPEED}")
-    
-    except AssertionError as e:
-        logger.error(f"测试失败: {str(e)}")
-        # 发生错误时尝试恢复默认值
-        try:
-            logger.warning("正在尝试恢复所有手指默认位置...")
-            serial_api_instance.HAND_SetFingerPosAbsAll(
-                HAND_ID, 
-                [DEFAULT_POS] * MAX_MOTORS,
-                [DEFAULT_SPEED] * MAX_MOTORS,
-                MAX_MOTORS,
-                []
-            )
-        except Exception as recovery_err:
-            logger.error(f"恢复默认位置失败: {str(recovery_err)}")
-        raise  # 重新抛出原始错误
-    
-    finally:
-        """------------------- 测试结果汇总 -------------------"""
-        logger.info("\n===== 批量设置手指绝对位置测试结果汇总 =====")
-        passed = sum(1 for case, result in test_results if "通过" in result)
-        total = len(test_results)
-        logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
-        
-        for case, result in test_results:
-            logger.info(f"{case}: {result}")
-        logger.info("=======================")
-
-@pytest.mark.skip('测试设置finger pos all一直报超时,此case暂时跳过')
-def test_HAND_SetFingerPosAll(serial_api_instance):
-    # 定义测试常量
-    HAND_ID = 0x02
-    
-    # 默认参数值
-    DEFAULT_POS = 0     # 位置默认值
-    DEFAULT_SPEED = 127   # 速度默认值
-    
-    # 定义各参数的测试值(包含有效/边界/无效值)
-    PARAM_TEST_DATA = {
-        'pos_all': [
-            (0,       "所有手指绝逻辑位置最小值0"),
-            (32767,   "所有手指逻辑位置中间值32767"),
-            (65535,   "所有手指逻辑位置最大值65535"),
-            (-1,      "所有手指逻辑位置边界值-1"),
-            (65536,   "所有手指逻辑位置边界值65536"),
-        ],
-       'speed': [
-            (0,       "手指移动速度最小值0"),
-            (127,     "手指移动速度中间值127"),
-            (255,     "手指移动速度最大值255"),
-            (-1,      "手指移动速度边界值-1"),
-            (256,     "手指移动速度边界值256")
-        ]
-    }
-    
-    # 测试结果存储
-    test_results = []
-    
-    try:
-        """------------------- 单变量测试 -------------------"""
-        logger.info(f"\n===== 开始批量设置手指相对位置测试 =====")
-        
-        # 测试位置参数（固定速度为默认值）
-        logger.info(f"测试位置参数")
-        for pos, desc in PARAM_TEST_DATA['pos_all']:
-            # 生成统一位置数组
-            pos_array = [pos] * MAX_MOTOR_CNT
-            speed_array = [DEFAULT_SPEED] * MAX_MOTOR_CNT
-            remote_err = []
-            
-            err = serial_api_instance.HAND_SetFingerPosAll(
-                HAND_ID, pos_array, speed_array, MAX_MOTOR_CNT, remote_err
-            )
-            
-            # 验证结果
-            if 0 <= pos <= 65535:  # 有效位置范围
-                assert err == HAND_RESP_SUCCESS, \
-                    f"设置有效位置失败: {desc}, 错误码:err={err},remote_err={remote_err[0]}"
-                test_results.append((f"位置测试({desc})", "通过"))
-            else:  # 无效位置值
-                assert err != HAND_RESP_SUCCESS, \
-                    f"设置无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"位置测试({desc})", "通过(预期失败)"))
-        
-        # 测试速度参数（固定位置为默认值）
-        logger.info(f"测试速度参数")
-        for speed, desc in PARAM_TEST_DATA['speed']:
-            # 生成统一速度数组
-            pos_array = [DEFAULT_POS] * MAX_MOTOR_CNT
-            speed_array = [speed] * MAX_MOTOR_CNT
-            remote_err = []
-            
-            err = serial_api_instance.HAND_SetFingerPosAll(
-                HAND_ID, pos_array, speed_array, MAX_MOTOR_CNT, remote_err
-            )
-            
-            # 验证结果
-            if 0 <= speed <= 255:  # 有效速度范围
-                assert err == HAND_RESP_SUCCESS, \
-                    f"设置有效速度失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"速度测试({desc})", "通过"))
-            else:  # 无效速度值
-                assert err != HAND_RESP_SUCCESS, \
-                    f"设置无效速度未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                test_results.append((f"速度测试({desc})", "通过(预期失败)"))
-        
-        logger.info(f"批量设置手指相对位置测试完成")
-        
-        """------------------- 恢复默认值 -------------------"""
-        logger.info("\n===== 恢复所有手指默认位置 =====")
-        remote_err = []
-        
-        err = serial_api_instance.HAND_SetFingerPosAll(
-            HAND_ID, 
-            [DEFAULT_POS] * MAX_MOTOR_CNT,
-            [DEFAULT_SPEED] * MAX_MOTOR_CNT,
-            MAX_MOTOR_CNT,
-            remote_err
-        )
-        assert err == HAND_RESP_SUCCESS, \
-            f"恢复默认位置失败, 错误码: err={err},remote_err={remote_err[0]}"
-        logger.info(f"所有手指已恢复默认位置: {DEFAULT_POS}, 速度: {DEFAULT_SPEED}")
-    
-    except AssertionError as e:
-        logger.error(f"测试失败: {str(e)}")
-        # 发生错误时尝试恢复默认值
-        try:
-            logger.warning("正在尝试恢复所有手指默认位置...")
-            serial_api_instance.HAND_SetFingerPosAll(
-                HAND_ID, 
-                [DEFAULT_POS] * MAX_MOTOR_CNT,
-                [DEFAULT_SPEED] * MAX_MOTOR_CNT,
-                MAX_MOTOR_CNT,
-                []
-            )
-        except Exception as recovery_err:
-            logger.error(f"恢复默认位置失败: {str(recovery_err)}")
-        raise  # 重新抛出原始错误
-    
-    finally:
-        """------------------- 测试结果汇总 -------------------"""
-        logger.info("\n===== 批量设置手指相对位置测试结果汇总 =====")
-        passed = sum(1 for case, result in test_results if "通过" in result)
-        total = len(test_results)
-        logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
-        
-        for case, result in test_results:
-            logger.info(f"{case}: {result}")
-        logger.info("=======================")
-
 @pytest.mark.skip('测试设置finger angle all一直报超时,此case暂时跳过')
 def test_HAND_SetFingerAngleAll(serial_api_instance):
     # 定义测试常量
-    HAND_ID = 0x02
-    
     # 默认参数值
     DEFAULT_ANGLE = 0     # 角度默认值
     DEFAULT_SPEED = 127    # 速度默认值
@@ -1936,18 +1594,131 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置finger force pid一直报超时,此case暂时跳过')
-def test_HAND_SetFingerForcePID(serial_api_instance):
+@pytest.mark.skip('测试设置thumb root pos,pos和speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常,提bug:#5742,先跳过')
+def test_HAND_SetThumbRootPos(serial_api_instance):
     # 定义测试常量
-    HAND_ID = 0x02
-    FINGERS = [0, 1, 2, 3, 4, 5]  # 6个手指ID
+    # 默认参数值
+    DEFAULT_POS = 0     # 位置默认值（合法值：0, 1, 2）
+    DEFAULT_SPEED = 127   # 速度默认值（范围：0-255）
+    delay_milli_seconds_impl(5000)
+    # 定义各参数的测试值(包含有效/边界/无效值)
+    PARAM_TEST_DATA = {
+        'thumb_root_pos': [
+            (0,     "旋转大拇指到预设位置值0"),
+            (1,     "旋转大拇指到预设位置值1"),
+            (2,     "旋转大拇指到预设位置值2"),
+            # (-1,    "旋转大拇指到预设位置边界值-1"),
+            # (3,     "旋转大拇指到预设位置边界值3"),
+        ],
+        'speed': [
+            (0,       "手指移动速度最小值0"),
+            (127,     "手指移动速度中间值127"),
+            (255,     "手指移动速度最大值255"),
+            # (-1,      "手指移动速度边界值-1"),
+            # (256,     "手指移动速度边界值256")
+        ]
+    }
     
+    # 测试结果存储
+    test_results = []
+    
+    try:
+        """------------------- 单变量测试 -------------------"""
+        logger.info(f"\n===== 开始测试拇指根部位置设置 =====")
+        
+        # 测试位置参数（固定速度为默认值）
+        logger.info(f"测试拇指根部位置参数")
+        for pos, desc in PARAM_TEST_DATA['thumb_root_pos']:
+            remote_err = []
+            delay_milli_seconds_impl(500)
+            err = serial_api_instance.HAND_SetThumbRootPos(
+                HAND_ID, 
+                pos,              # 测试变量位置值
+                DEFAULT_SPEED,    # 速度固定为默认值
+                remote_err
+            )
+            
+            # 验证结果
+            if pos in [0, 1, 2]:  # 有效位置范围
+                assert err == HAND_RESP_SUCCESS, \
+                    f"设置拇指根部有效位置失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                test_results.append((f"拇指根部位置测试({desc})", "通过"))
+            else:  # 无效位置值
+                assert err != HAND_RESP_SUCCESS, \
+                    f"设置拇指根部无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                test_results.append((f"拇指根部位置测试({desc})", "通过(预期失败)"))
+        
+        # 测试速度参数（固定位置为默认值）
+        logger.info(f"测试拇指根部速度参数")
+        for speed, desc in PARAM_TEST_DATA['speed']:
+            remote_err = []
+            delay_milli_seconds_impl(500)
+            err = serial_api_instance.HAND_SetThumbRootPos(
+                HAND_ID, 
+                DEFAULT_POS,      # 位置固定为默认值
+                speed,            # 测试变量速度值
+                remote_err
+            )
+            
+            # 验证结果
+            if 0 <= speed <= 255:  # 有效速度范围
+                assert err == HAND_RESP_SUCCESS, \
+                    f"设置拇指根部有效速度失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                test_results.append((f"拇指根部速度测试({desc})", "通过"))
+            else:  # 无效速度值
+                assert err != HAND_RESP_SUCCESS, \
+                    f"设置拇指根部无效速度未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                test_results.append((f"拇指根部速度测试({desc})", "通过(预期失败)"))
+        
+        logger.info(f"拇指根部位置设置测试完成")
+        
+        """------------------- 恢复默认值 -------------------"""
+        logger.info("\n===== 恢复拇指根部默认位置 =====")
+        remote_err = []
+        delay_milli_seconds_impl(500)
+        err = serial_api_instance.HAND_SetThumbRootPos(
+            HAND_ID, 
+            DEFAULT_POS, DEFAULT_SPEED,  # 恢复默认位置和速度
+            remote_err
+        )
+        assert err == HAND_RESP_SUCCESS, \
+            f"恢复拇指根部默认位置失败, 错误码: err={err},remote_err={remote_err[0]}"
+        logger.info(f"拇指根部已恢复默认位置: {DEFAULT_POS}, 速度: {DEFAULT_SPEED}")
+    
+    except AssertionError as e:
+        logger.error(f"测试失败: {str(e)}")
+        # 发生错误时尝试恢复默认值
+        try:
+            logger.warning("正在尝试恢复拇指根部默认位置...")
+            delay_milli_seconds_impl(500)
+            serial_api_instance.HAND_SetThumbRootPos(
+                HAND_ID, 
+                DEFAULT_POS, DEFAULT_SPEED, 
+                []
+            )
+        except Exception as recovery_err:
+            logger.error(f"恢复默认位置失败: {str(recovery_err)}")
+        raise  # 重新抛出原始错误
+    
+    finally:
+        """------------------- 测试结果汇总 -------------------"""
+        logger.info("\n===== 拇指根部位置设置测试结果汇总 =====")
+        passed = sum(1 for case, result in test_results if "通过" in result)
+        total = len(test_results)
+        logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
+        
+        for case, result in test_results:
+            logger.info(f"{case}: {result}")
+        logger.info("=======================")
+
+@pytest.mark.skip('测试设置finger force pid，设置多个手指的正常值，报无效值错误，提bug：#5723，先跳过')
+def test_HAND_SetFingerForcePID(serial_api_instance):
     # 默认参数值（与test_HAND_SetFingerPID保持一致）
     DEFAULT_P = 25000
     DEFAULT_I = 200
     DEFAULT_D = 25000
     DEFAULT_G = 100
-    
+    delay_milli_seconds_impl(5000)
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'P': [
@@ -1996,13 +1767,14 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的力控PID参数 =====")
             
             # 测试P参数
             logger.info(f"测试手指 {finger_id} 的P参数")
             for p_value, desc in PARAM_TEST_DATA['P']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerForcePID(
                     HAND_ID, finger_id, 
                     p_value,        # 测试变量P
@@ -2026,6 +1798,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
             logger.info(f"测试手指 {finger_id} 的I参数")
             for i_value, desc in PARAM_TEST_DATA['I']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerForcePID(
                     HAND_ID, finger_id, 
                     DEFAULT_P,      # P固定为默认值
@@ -2049,6 +1822,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
             logger.info(f"测试手指 {finger_id} 的D参数")
             for d_value, desc in PARAM_TEST_DATA['D']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerForcePID(
                     HAND_ID, finger_id, 
                     DEFAULT_P,      # P固定为默认值
@@ -2072,6 +1846,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
             logger.info(f"测试手指 {finger_id} 的G参数")
             for g_value, desc in PARAM_TEST_DATA['G']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerForcePID(
                     HAND_ID, finger_id, 
                     DEFAULT_P,      # P固定为默认值
@@ -2095,8 +1870,9 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认力控PID参数 =====")
-        for finger_id in FINGERS:
+        for finger_id in range(MAX_MOTOR_CNT):
             remote_err = []
+            delay_milli_seconds_impl(500)
             err = serial_api_instance.HAND_SetFingerForcePID(
                 HAND_ID, finger_id, 
                 DEFAULT_P, DEFAULT_I, DEFAULT_D, DEFAULT_G, remote_err
@@ -2110,7 +1886,8 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
         # 发生错误时尝试恢复所有手指默认值
         try:
             logger.warning("正在尝试恢复所有手指默认力控PID参数...")
-            for finger_id in FINGERS:
+            for finger_id in range(MAX_MOTOR_CNT):
+                delay_milli_seconds_impl(500)
                 serial_api_instance.HAND_SetFingerForcePID(
                     HAND_ID, finger_id, 
                     DEFAULT_P, DEFAULT_I, DEFAULT_D, DEFAULT_G, []
@@ -2130,33 +1907,31 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
         
-@pytest.mark.skip('测试通过')
+# @pytest.mark.skip('测试通过')
 def test_HAND_ResetForce(serial_api_instance):# 修改api调用接口函数，添加none后测试pass
-    hand_id = 0x02
     remote_err = []
-
-    err = serial_api_instance.HAND_ResetForce(hand_id, remote_err)
+    delay_milli_seconds_impl(5000)
+    err = serial_api_instance.HAND_ResetForce(HAND_ID, remote_err)
     assert err == HAND_RESP_SUCCESS, f"重置力量值，错误码: err={err},remote_err={remote_err[0]}"
     logger.info("成功重置力量值")
 
-@pytest.mark.skip('测试通过')
+# @pytest.mark.skip('测试通过')
 def test_HAND_SetSelfTestLevel(serial_api_instance):
-    hand_id = 0x02
     SELF_TEST_LEVEL = {
         '等待指令': 0,
         '半自检': 1,
         '完整自检': 2
     }
-    
+    delay_milli_seconds_impl(5000)
     # 测试设置为半自检
     remote_err = [0]
-    err = serial_api_instance.HAND_SetSelfTestLevel(hand_id, SELF_TEST_LEVEL['半自检'], remote_err)
+    err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, SELF_TEST_LEVEL['半自检'], remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置半自检失败，错误码: err={err},remote_err={remote_err[0]}"
     
     time.sleep(5)  # 等待自检执行
     
     current_level = [0]
-    err,_ = serial_api_instance.HAND_GetSelfTestLevel(hand_id, current_level, [])
+    err,_ = serial_api_instance.HAND_GetSelfTestLevel(HAND_ID, current_level, [])
     assert err == HAND_RESP_SUCCESS, f"获取自检级别失败，错误码: err={err},remote_err={remote_err[0]}"
     
     assert current_level[0] == SELF_TEST_LEVEL['半自检'], (
@@ -2167,12 +1942,12 @@ def test_HAND_SetSelfTestLevel(serial_api_instance):
     
     # 测试设置为完整自检（恢复默认状态）
     remote_err = []
-    err = serial_api_instance.HAND_SetSelfTestLevel(hand_id, SELF_TEST_LEVEL['完整自检'], remote_err)
+    err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, SELF_TEST_LEVEL['完整自检'], remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置完整自检失败，错误码: err={err},remote_err={remote_err[0]}"
     
     time.sleep(5)  # 等待自检执行
     
-    err,_ = serial_api_instance.HAND_GetSelfTestLevel(hand_id, current_level, [])
+    err,_ = serial_api_instance.HAND_GetSelfTestLevel(HAND_ID, current_level, [])
     assert err == HAND_RESP_SUCCESS, f"获取自检级别失败，错误码:err={err}"
     
     assert current_level[0] == SELF_TEST_LEVEL['完整自检'], (
@@ -2183,26 +1958,25 @@ def test_HAND_SetSelfTestLevel(serial_api_instance):
     
     # 确保测试结束后恢复默认状态
     remote_err = [0]
-    err = serial_api_instance.HAND_SetSelfTestLevel(hand_id, SELF_TEST_LEVEL['完整自检'], remote_err)
+    err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, SELF_TEST_LEVEL['完整自检'], remote_err)
     if err != HAND_RESP_SUCCESS:
         logger.error(f"恢复默认自检级别失败，错误码: err={err},remote_err={remote_err[0]}")
 
-@pytest.mark.skip('调试通过')
+# @pytest.mark.skip('调试通过')
 def test_HAND_SetBeepSwitch(serial_api_instance):
-    hand_id = 0x02
     BEEP_STATUS = {
         'OFF': 0,
         'ON': 1
     }
-    
+    delay_milli_seconds_impl(5000)
     # 测试关闭蜂鸣器
-    err = serial_api_instance.HAND_SetBeepSwitch(hand_id, BEEP_STATUS['OFF'], [])
+    err = serial_api_instance.HAND_SetBeepSwitch(HAND_ID, BEEP_STATUS['OFF'], [])
     assert err == HAND_RESP_SUCCESS, f"设置蜂鸣器关闭失败，错误码: err={err}"
     
     time.sleep(0.5)  # 等待设备响应
     
     status_container = [0]
-    err,_ = serial_api_instance.HAND_GetBeepSwitch(hand_id, status_container, [])
+    err,_ = serial_api_instance.HAND_GetBeepSwitch(HAND_ID, status_container, [])
     assert err == HAND_RESP_SUCCESS, f"获取蜂鸣器状态失败，错误码: err={err}"
     
     actual_status = status_container[0]
@@ -2212,12 +1986,12 @@ def test_HAND_SetBeepSwitch(serial_api_instance):
     logger.info("蜂鸣器已成功关闭")
     
     # 测试开启蜂鸣器
-    err = serial_api_instance.HAND_SetBeepSwitch(hand_id, BEEP_STATUS['ON'], [])
+    err = serial_api_instance.HAND_SetBeepSwitch(HAND_ID, BEEP_STATUS['ON'], [])
     assert err == HAND_RESP_SUCCESS, f"设置蜂鸣器开启失败，错误码: err={err}"
     
     time.sleep(0.5)  # 等待设备响应
     
-    err,_ = serial_api_instance.HAND_GetBeepSwitch(hand_id, status_container, [])
+    err,_ = serial_api_instance.HAND_GetBeepSwitch(HAND_ID, status_container, [])
     assert err == HAND_RESP_SUCCESS, f"获取蜂鸣器状态失败，错误码: err={err}"
     
     actual_status = status_container[0]
@@ -2227,35 +2001,33 @@ def test_HAND_SetBeepSwitch(serial_api_instance):
     logger.info("蜂鸣器已成功开启")
     
     # 恢复默认状态
-    err = serial_api_instance.HAND_SetBeepSwitch(hand_id, BEEP_STATUS['ON'], [])
+    err = serial_api_instance.HAND_SetBeepSwitch(HAND_ID, BEEP_STATUS['ON'], [])
     if err != HAND_RESP_SUCCESS:
         logger.error(f"恢复蜂鸣器默认状态失败，错误码: err={err}")
     else:
         logger.info('蜂鸣器开关已恢复默认状态')
 
-@pytest.mark.skip('调试通过')
+# @pytest.mark.skip('调试通过')
 def test_HAND_Beep(serial_api_instance): # 设置时长慧报3的错误码
-    hand_id = 0x02
     duration = 500
-    err = serial_api_instance.HAND_Beep(hand_id, duration, [])
+    delay_milli_seconds_impl(5000)
+    err = serial_api_instance.HAND_Beep(HAND_ID, duration, [])
     assert err == HAND_RESP_SUCCESS,f"设置蜂鸣器时长失败:  err={err}"
     logger.info(f'成功设置蜂鸣器时长：{duration}')
     
 @pytest.mark.skip('按钮不支持,此case暂时跳过')
 def test_HAND_SetButtonPressedCnt(serial_api_instance):
-    hand_id = 0x02
-    
     # 测试正常范围（0-255）
     # 测试最小值
     target_pressed_cnt = 0
     remote_err = []
-    err = serial_api_instance.HAND_SetButtonPressedCnt(hand_id, target_pressed_cnt, remote_err)
+    err = serial_api_instance.HAND_SetButtonPressedCnt(HAND_ID, target_pressed_cnt, remote_err)
     assert err == HAND_RESP_SUCCESS, (
         f"设置按钮按下次数失败（值={target_pressed_cnt}），错误码:  err={err},remote_err={remote_err[0]}"
     )
     
     observed_pressed_cnt = [0]
-    err = serial_api_instance.HAND_GetButtonPressedCnt(hand_id, observed_pressed_cnt, remote_err)
+    err = serial_api_instance.HAND_GetButtonPressedCnt(HAND_ID, observed_pressed_cnt, remote_err)
     assert err == HAND_RESP_SUCCESS, (
         f"获取按钮按下次数失败（值={target_pressed_cnt}），错误码:  err={err},remote_err={remote_err[0]}"
     )
@@ -2270,13 +2042,13 @@ def test_HAND_SetButtonPressedCnt(serial_api_instance):
     # 测试中间值
     target_pressed_cnt = 128
     remote_err = []
-    err = serial_api_instance.HAND_SetButtonPressedCnt(hand_id, target_pressed_cnt, remote_err)
+    err = serial_api_instance.HAND_SetButtonPressedCnt(HAND_ID, target_pressed_cnt, remote_err)
     assert err == HAND_RESP_SUCCESS, (
         f"设置按钮按下次数失败（值={target_pressed_cnt}），错误码: err={err},remote_err={remote_err[0]}"
     )
     
     observed_pressed_cnt = [0]
-    err = serial_api_instance.HAND_GetButtonPressedCnt(hand_id, observed_pressed_cnt, remote_err)
+    err = serial_api_instance.HAND_GetButtonPressedCnt(HAND_ID, observed_pressed_cnt, remote_err)
     assert err == HAND_RESP_SUCCESS, (
         f"获取按钮按下次数失败（值={target_pressed_cnt}），错误码: err={err},remote_err={remote_err[0]}"
     )
@@ -2291,13 +2063,13 @@ def test_HAND_SetButtonPressedCnt(serial_api_instance):
     # 测试最大值
     target_pressed_cnt = 255
     remote_err = []
-    err = serial_api_instance.HAND_SetButtonPressedCnt(hand_id, target_pressed_cnt, remote_err)
+    err = serial_api_instance.HAND_SetButtonPressedCnt(HAND_ID, target_pressed_cnt, remote_err)
     assert err == HAND_RESP_SUCCESS, (
         f"设置按钮按下次数失败（值={target_pressed_cnt}），错误码: err={err},remote_err={remote_err[0]}"
     )
     
     observed_pressed_cnt = [0]
-    err = serial_api_instance.HAND_GetButtonPressedCnt(hand_id, observed_pressed_cnt, remote_err)
+    err = serial_api_instance.HAND_GetButtonPressedCnt(HAND_ID, observed_pressed_cnt, remote_err)
     assert err == HAND_RESP_SUCCESS, (
         f"获取按钮按下次数失败（值={target_pressed_cnt}），错误码:err={err},remote_err={remote_err[0]}"
     )
@@ -2312,7 +2084,7 @@ def test_HAND_SetButtonPressedCnt(serial_api_instance):
     # 测试超出范围（256-65535） - 期望触发ValueError
     # 测试超出范围的最小值（256）
     try:
-        serial_api_instance.HAND_SetButtonPressedCnt(hand_id, 256, [0])
+        serial_api_instance.HAND_SetButtonPressedCnt(HAND_ID, 256, [0])
     except ValueError as e:
         logger.info(f"成功捕获预期的ValueError（值=256）: {str(e)}")
     else:
@@ -2320,7 +2092,7 @@ def test_HAND_SetButtonPressedCnt(serial_api_instance):
     
     # 测试中间值（32768）
     try:
-        serial_api_instance.HAND_SetButtonPressedCnt(hand_id, 32768, [0])
+        serial_api_instance.HAND_SetButtonPressedCnt(HAND_ID, 32768, [0])
     except ValueError as e:
         logger.info(f"成功捕获预期的ValueError（值=32768）: {str(e)}")
     else:
@@ -2328,7 +2100,7 @@ def test_HAND_SetButtonPressedCnt(serial_api_instance):
     
     # 测试超出范围的最大值（65535）
     try:
-        serial_api_instance.HAND_SetButtonPressedCnt(hand_id, 65535, [0])
+        serial_api_instance.HAND_SetButtonPressedCnt(HAND_ID, 65535, [0])
     except ValueError as e:
         logger.info(f"成功捕获预期的ValueError（值=65535）: {str(e)}")
     else:
@@ -2336,7 +2108,7 @@ def test_HAND_SetButtonPressedCnt(serial_api_instance):
     
     # 测试负数（-1）
     try:
-        serial_api_instance.HAND_SetButtonPressedCnt(hand_id, -1, [0])
+        serial_api_instance.HAND_SetButtonPressedCnt(HAND_ID, -1, [0])
     except ValueError as e:
         logger.info(f"成功捕获预期的ValueError（值=-1）: {str(e)}")
     else:
@@ -2344,8 +2116,7 @@ def test_HAND_SetButtonPressedCnt(serial_api_instance):
 
 @pytest.mark.skip('初始化，初始化要先把自检等级设置成0，才能生效')
 def test_HAND_StartInit(serial_api_instance):
-    hand_id = 0x02
     remote_err = []
-    err = serial_api_instance.HAND_StartInit(hand_id, remote_err)
+    err = serial_api_instance.HAND_StartInit(HAND_ID, remote_err)
     assert err == HAND_RESP_SUCCESS,f"初始化手失败，错误码: 错误码:err={err},remote_err={remote_err[0]}"
     logger.info(f'手初始化成功')
