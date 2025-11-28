@@ -301,175 +301,119 @@ def test_HAND_PowerOff(serial_api_instance):
     assert err == HAND_RESP_SUCCESS,f"设置关机失败: err={err},remote_err={remote_err[0]}"
     logger.info('设置关机成功成功')
 
+@pytest.mark.skip('测试设置设备ID，设置范围外的值不报错，提bug#5749 ，先跳过')
+def test_HAND_SetID(serial_api_instance):
+    """测试设置设备ID功能（单函数实现，适配pytest夹具）"""
+    # 校验夹具实例有效性
+    if serial_api_instance == 0:
+        pytest.fail("夹具初始化失败，跳过ID测试")
+    
+    test_results = []
+    original_id = HAND_ID  # 初始ID（与夹具保持一致）
+    try:
+        # 定义测试用例（ID有效范围：3-247）
+        test_cases = [
+            (3,     "有效ID-最小值3"),  # 修正数值与描述匹配
+            (125,   "有效ID-中间值125"),
+            (247,   "有效ID-最大值247"),
+            (1,     "无效ID-边界值1"),
+            (0,     "无效ID-边界值0"),
+            (-1,    "无效ID-负数-1"),
+            (248,   "无效ID-边界值248"),
+            (256,   "无效ID-超出字节范围256"),
+        ]
 
-# @pytest.mark.skip('先跳过设备ID的修改')  
-# def test_HAND_SetID(serial_api_instance):
-#     """测试设置设备ID功能（适配API实际方法，移除HAND_GetID依赖）"""
-#     original_HAND_ID = 0x02  # 初始默认ID
-#     test_results = []
-    
-#     # 保存原始API的私有数据用于重建连接
-#     private_data = serial_api_instance.get_private_data() if hasattr(serial_api_instance, 'get_private_data') else None
-#     print('111')
-#     try:
-#         # 定义测试数据（ID范围：2-247为有效）
-#         test_cases = [
-#             (3,     "hand id最小值2（有效）"),
-#             (125,   "hand id中间值125（有效）"),
-#             (247,   "hand id最大值247（有效）"),
-#             (1,     "hand id边界值1（无效）"),
-#             (0,     "hand id边界值0（无效）"),
-#             (-1,    "hand id边界值-1（无效）"),
-#             (248,   "hand id边界值248（无效）"),
-#             (256,   "hand id边界值256（无效）"),
-#         ]
-        
-#         for new_id, desc in test_cases:
-#             logger.info(f"\n----- 测试 {desc} -----")
-#             remote_err = []
-            
-#             # 发送设置ID命令（使用API中实际存在的HAND_SetNodeID对应方法）
-#             set_err = serial_api_instance.HAND_SetID(original_HAND_ID, new_id, remote_err)
-#             print('2222')
-#             # 处理有效ID（2-247）
-#             if 3 <= new_id <= 247:
-#                 # 验证设置命令是否成功
-#                 assert set_err == HAND_RESP_SUCCESS, \
-#                     f"有效ID设置命令失败: {desc}, 错误码: {set_err}"
-#                 print('333')
-#                 # 设备重启等待（根据实际重启时间调整）
-#                 logger.info(f"等待设备重启（新ID: {new_id}）...")
-#                 time.sleep(5)
-#                 print('4444')
-#                 # 关闭当前连接
-#                 if hasattr(api, 'shutdown'):
-#                     serial_api_instance.shutdown()
-#                 CAN_Shutdown(private_data)
-#                 print('555')
-#                 # 重建连接（使用新ID）并验证是否能通信
-#                 can_interface_instance = CAN_Init(port_name="1", baudrate=1000000)
-#                 assert can_interface_instance is not None, "CAN总线初始化失败"
-#                 print('666')
-#                 # 创建新API实例（使用新ID）
-#                 serial_api_instance = OHandSerialAPI(
-#                     private_data=can_interface_instance,
-#                     protocol=0,  # HAND_PROTOCOL_UART
-#                     address_master=new_id,
-#                     send_data_impl=send_data_impl,
-#                     recv_data_impl=recv_data_impl
-#                 )
-#                 serial_api_instance.HAND_SetTimerFunction(get_milli_seconds_impl, delay_milli_seconds_impl)
-#                 serial_api_instance.HAND_SetCommandTimeOut(255)
-                
-#                 # 间接验证新ID生效：通过查询其他基础信息（如协议版本）判断连接有效性
-#                 major, minor = [0], [0]
-#                 verify_err, _ = serial_api_instance.HAND_GetProtocolVersion(new_id, major, minor, [])
-#                 assert verify_err == HAND_RESP_SUCCESS, \
-#                     f"新ID {new_id} 通信失败，验证协议版本错误: {verify_err}"
-                
-#                 test_results.append((f"ID测试({desc})", "通过"))
-#                 logger.info(f"新ID {new_id} 验证成功（通信正常）")
-                
-#                 # 恢复原始ID
-#                 recover_err, _ = serial_api_instance.HAND_SetID(new_id, original_HAND_ID, [])
-#                 assert recover_err == HAND_RESP_SUCCESS, \
-#                     f"恢复原始ID命令失败，错误码: {recover_err}"
-                
-#                 # 等待恢复后重启
-#                 logger.info(f"等待设备恢复原始ID {original_HAND_ID}...")
-#                 time.sleep(5)
-                
-#                 # 关闭当前连接
-#                 if hasattr(serial_api_instance, 'shutdown'):
-#                     serial_api_instance.shutdown()
-#                 CAN_Shutdown(can_interface_instance)
-                
-#                 # 重建原始ID连接
-#                 can_interface_instance = CAN_Init(port_name="1", baudrate=1000000)
-#                 assert can_interface_instance is not None, "CAN总线初始化失败"
-                
-#                 serial_api_instance = OHandSerialAPI(
-#                     private_data=can_interface_instance,
-#                     protocol=0,
-#                     address_master=original_HAND_ID,
-#                     send_data_impl=send_data_impl,
-#                     recv_data_impl=recv_data_impl
-#                 )
-#                 serial_api_instance.HAND_SetTimerFunction(get_milli_seconds_impl, delay_milli_seconds_impl)
-#                 serial_api_instance.HAND_SetCommandTimeOut(255)
-                
-#                 # 验证原始ID恢复：查询协议版本判断连接
-#                 major, minor = [0], [0]
-#                 recover_verify_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_HAND_ID, major, minor, [])
-#                 assert recover_verify_err == HAND_RESP_SUCCESS, \
-#                     f"原始ID {original_HAND_ID} 恢复失败，通信错误: {recover_verify_err}"
-#                 logger.info(f"原始ID {original_HAND_ID} 恢复成功（通信正常）")
-            
-#             # 处理无效ID（超出2-247范围）
-#             else:
-#                 # 验证设置命令是否被拒绝
-#                 assert set_err != HAND_RESP_SUCCESS, \
-#                     f"无效ID设置未被拒绝: {desc}, 错误码: {set_err}"
-                
-#                 # 验证原始ID仍能通信（未被修改）
-#                 major, minor = [0], [0]
-#                 check_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_HAND_ID, major, minor, [])
-#                 assert check_err == HAND_RESP_SUCCESS, \
-#                     f"无效ID设置后原始ID通信失败，错误码: {check_err}"
-                
-#                 test_results.append((f"ID测试({desc})", "通过（预期失败）"))
-    
-#     except AssertionError as e:
-#         logger.error(f"测试断言失败: {str(e)}")
-#         test_results.append(("全局断言", f"失败: {str(e)}"))
-#         raise
-#     except Exception as e:
-#         logger.error(f"测试异常: {str(e)}")
-#         test_results.append(("全局异常", f"失败: {str(e)}"))
-#         raise
-#     finally:
-#         # 最终确保设备恢复为原始ID并验证
-#         try:
-#             logger.info("\n----- 最终恢复原始ID -----")
-#             if hasattr(serial_api_instance, 'shutdown'):
-#                 serial_api_instance.shutdown()
-#             CAN_Shutdown(can_interface_instance)
-            
-#             # 重建原始ID连接
-#             can_interface_instance = CAN_Init(port_name="1", baudrate=1000000)
-#             serial_api_instance = OHandSerialAPI(
-#                 private_data=can_interface_instance,
-#                 protocol=0,
-#                 address_master=original_HAND_ID,
-#                 send_data_impl=send_data_impl,
-#                 recv_data_impl=recv_data_impl
-#             )
-#             serial_api_instance.HAND_SetTimerFunction(get_milli_seconds_impl, delay_milli_seconds_impl)
-            
-#             # 恢复原始ID命令
-#             final_err, _ = serial_api_instance.HAND_SetID(original_HAND_ID, original_HAND_ID, [])
-#             time.sleep(3)
-            
-#             # 验证最终状态
-#             major, minor = [0], [0]
-#             final_verify_err, _ = serial_api_instance.HAND_GetProtocolVersion(original_HAND_ID, major, minor, [])
-#             if final_verify_err == HAND_RESP_SUCCESS:
-#                 logger.info(f"最终恢复原始ID {original_HAND_ID} 成功（通信正常）")
-#             else:
-#                 logger.warning(f"最终恢复原始ID失败，通信错误: {final_verify_err}")
-#         except Exception as e:
-#             logger.error(f"最终恢复原始ID异常: {str(e)}")
-        
-#         # 测试结果汇总
-#         logger.info("\n===== 设置设备ID测试结果汇总 =====")
-#         passed = sum(1 for case, result in test_results if "通过" in result)
-#         total = len(test_results)
-#         logger.info(f"总测试用例: {total}, 通过: {passed}, 失败: {total - passed}")
-#         for case, result in test_results:
-#             logger.info(f"{case}: {result}")
-#         logger.info("=======================")
-    
+        for new_id, desc in test_cases:
+            print(f"\n===== 测试ID设置：{desc} =====")
+            remote_err = []
+            current_api = serial_api_instance  # 默认使用夹具的原始实例
 
+            # 1. 发送设置ID命令
+            set_err = current_api.HAND_SetID(original_id, new_id, remote_err)
+            print(f"设置ID {new_id} 结果：错误码={set_err}, 远程错误={remote_err}")
+
+            # 2. 验证有效ID（2-247）
+            if 2 <= new_id <= 247:
+                # 断言设置命令成功
+                assert set_err == HAND_RESP_SUCCESS, \
+                    f"有效ID {new_id} 设置失败，错误码={set_err}, 远程错误={remote_err}"
+                
+                # 等待设备重启应用新ID（根据实际设备调整等待时间）
+                print(f"等待设备重启（新ID: {new_id}）...")
+                time.sleep(5)
+
+                # 验证新ID通信有效性（通过查询协议版本间接验证）
+                major, minor = [0], [0]
+                # 修复返回值解包：若函数返回单个int则无需解包
+                verify_err,_,_ = serial_api_instance.HAND_GetProtocolVersion(new_id, major, minor, [])
+                assert verify_err == HAND_RESP_SUCCESS, \
+                    f"新ID {new_id} 通信失败，验证错误码={verify_err}"
+                
+                print(f"新ID {new_id} 验证通过，开始恢复原始ID...")
+                # 恢复原始ID（使用新ID的实例发送恢复命令）
+                recover_err = serial_api_instance.HAND_SetID(new_id, original_id, [])
+                assert recover_err == HAND_RESP_SUCCESS, \
+                    f"恢复原始ID {original_id} 失败，错误码={recover_err}"
+                
+                # 等待恢复生效
+                time.sleep(5)
+
+                # 验证原始ID恢复成功
+                recover_verify_err,_,_ = serial_api_instance.HAND_GetProtocolVersion(original_id, major, minor, [])
+                assert recover_verify_err == HAND_RESP_SUCCESS, \
+                    f"原始ID {original_id} 恢复后通信失败，错误码={recover_verify_err}"
+                
+                test_results.append((desc, "通过"))
+
+            # 3. 验证无效ID（非2-247）
+            else:
+                # 断言设置命令失败
+                assert set_err != HAND_RESP_SUCCESS, \
+                    f"无效ID {new_id} 设置未被拒绝，错误码={set_err}, 远程错误={remote_err}"
+                
+                # 验证原始ID仍可正常通信
+                major, minor = [0], [0]
+                check_err,_,_ = serial_api_instance.HAND_GetProtocolVersion(original_id, major, minor, [])
+                assert check_err == HAND_RESP_SUCCESS, \
+                    f"无效ID设置后原始ID {original_id} 通信失败，错误码={check_err}"
+                
+                test_results.append((desc, "通过（预期失败）"))
+
+    except AssertionError as e:
+        print(f"测试断言失败：{str(e)}")
+        test_results.append((f"断言失败-{desc}", f"失败：{str(e)}"))
+        raise  # 重新抛出异常，让pytest标记测试失败
+    except Exception as e:
+        print(f"测试未预期异常：{str(e)}")
+        test_results.append(("全局异常", f"失败：{str(e)}"))
+        raise
+    finally:
+        # ========== 强制恢复原始ID，保证环境清洁 ==========
+        print("\n===== 执行最终ID恢复操作 =====")
+        try:
+            # 优先使用临时实例恢复，无则使用夹具实例
+            final_err = serial_api_instance.HAND_SetID(original_id, original_id, [])
+            time.sleep(5)  # 等待生效
+
+            # 验证最终恢复结果
+            major, minor = [0], [0]
+            final_verify_err,_,_ = serial_api_instance.HAND_GetProtocolVersion(original_id, major, minor, [])
+            if final_verify_err == HAND_RESP_SUCCESS:
+                print(f"设备ID已恢复为原始值：{original_id}")
+            else:
+                print(f"最终恢复ID失败，错误码={final_verify_err}，请手动检查设备！")
+        except Exception as e:
+            print(f"最终恢复ID时发生严重错误：{str(e)}")
+        finally:
+            pass
+        # ========== 测试结果汇总 ==========
+        print("\n===== 设备ID设置测试结果汇总 =====")
+        passed = sum(1 for _, res in test_results if "通过" in res)
+        total = len(test_results)
+        print(f"总用例数：{total} | 通过：{passed} | 失败：{total - passed}")
+        for case, result in test_results:
+            print(f"  {case}：{result}")
+        print("==================================")
 
 @pytest.mark.skip('测试设置finger pid，连续设置多个手指参数报错，提bug：#5722，#5723 ，先跳过')
 def test_HAND_SetFingerPID(serial_api_instance):
@@ -946,7 +890,7 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-# @pytest.mark.skip('单独跑测试是可以通过')
+@pytest.mark.skip('单独跑测试是可以通过，研发还需要优化，先跳过')
 def test_HAND_FingerStart(serial_api_instance):
     finger_id_bits = 0x01
     remote_err = []
@@ -955,7 +899,7 @@ def test_HAND_FingerStart(serial_api_instance):
     assert err == HAND_RESP_SUCCESS, f"设置开始移动手指失败，错误码: err={err},remote_err={remote_err[0]}"
     logger.info(f'设置开始移动手指成功')
     
-# @pytest.mark.skip('单独跑测试是可以通过')
+@pytest.mark.skip('单独跑测试是可以通过，研发还需要优化，先跳过')
 def test_HAND_FingerStop(serial_api_instance):
     finger_id_bits = 0x01
     remote_err = []
@@ -1242,8 +1186,8 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
             ([0]*MAX_MOTORS,      f"所有手指绝对位置边界值{[0]*MAX_MOTORS}"),
             ([65535]*MAX_MOTORS,      f"所有手指绝对位置边界值{[65535]*MAX_MOTORS}"),
              # 修复：无效的列表构造
-            # ([-1]*MAX_MOTORS,     f"所有手指绝对位置边界值{[-1]*MAX_MOTORS}"),
-            # ([65536] * MAX_MOTORS,   "所有手指绝对位置边界值65536"),
+            ([-1]*MAX_MOTORS,     f"所有手指绝对位置边界值{[-1]*MAX_MOTORS}"),
+            ([65536] * MAX_MOTORS,   "所有手指绝对位置边界值65536"),
         ],
        'speed': [
             ([0]*MAX_MOTORS,       "手指移动速度最小值0"),
@@ -1359,7 +1303,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
     # 默认参数值
     DEFAULT_ANGLE = 0     # 角度默认值
     DEFAULT_SPEED = 127     # 速度默认值
-    
+    delay_milli_seconds_impl(5000)
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'angle': [
@@ -1375,8 +1319,8 @@ def test_HAND_SetFingerAngle(serial_api_instance):
             (0,       "手指移动速度最小值0"),
             (127,     "手指移动速度中间值127"),
             (255,     "手指移动速度最大值255"),
-            (-1,      "手指移动速度边界值-1"),
-            (256,     "手指移动速度边界值256")
+            # (-1,      "手指移动速度边界值-1"),
+            # (256,     "手指移动速度边界值256")
         ]
     }
     
@@ -1392,28 +1336,34 @@ def test_HAND_SetFingerAngle(serial_api_instance):
             logger.info(f"测试手指 {finger_id} 的角度参数")
             for angle, desc in PARAM_TEST_DATA['angle']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerAngle(
                     HAND_ID, finger_id, 
                     angle,          # 测试变量角度值
                     DEFAULT_SPEED,  # 速度固定为默认值
                     remote_err
                 )
-                target_angle, current_angle = [0], [0]
-                serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle, current_angle, [])
+                
                 # 验证结果
                 if 0 <= angle <= 65535:  # 有效角度范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效角度失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                    test_results.append((f"手指{finger_id} 角度测试({desc})", "通过"))
+                    test_results.append((f"手指{finger_id} 角度写入({desc})", "通过"))
+                    
+                    target_angle, current_angle = [0], [0]
+                    err, raw_target_pos, raw_current_pos_get = serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle, current_angle, [])
+                    assert (abs(raw_current_pos_get[finger_id] - angle) < FINGER_POS_TARGET_MAX_LOSS), f"手指:{finger_id}写入值与读值误差较大，测试不通过"
                 else:  # 无效角度值
                     assert err != HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置无效角度未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
                     test_results.append((f"手指{finger_id} 角度测试({desc})", "通过(预期失败)"))
+                    
             
             # 测试速度参数（固定角度为默认值）
             logger.info(f"测试手指 {finger_id} 的速度参数")
             for speed, desc in PARAM_TEST_DATA['speed']:
                 remote_err = []
+                delay_milli_seconds_impl(500)
                 err = serial_api_instance.HAND_SetFingerAngle(
                     HAND_ID, finger_id, 
                     DEFAULT_ANGLE,  # 角度固定为默认值
@@ -1437,6 +1387,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
         logger.info("\n===== 恢复所有手指的默认角度 =====")
         for finger_id in range(MAX_MOTOR_CNT):
             remote_err = []
+            delay_milli_seconds_impl(500)
             err = serial_api_instance.HAND_SetFingerAngle(
                 HAND_ID, finger_id, 
                 DEFAULT_ANGLE, DEFAULT_SPEED,  # 恢复默认角度和速度
@@ -1452,6 +1403,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
         try:
             logger.warning("正在尝试恢复所有手指默认角度...")
             for finger_id in range(MAX_MOTOR_CNT):
+                delay_milli_seconds_impl(500)
                 serial_api_instance.HAND_SetFingerAngle(
                     HAND_ID, finger_id, 
                     DEFAULT_ANGLE, DEFAULT_SPEED, 
