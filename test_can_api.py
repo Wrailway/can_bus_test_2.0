@@ -21,6 +21,7 @@ FINGER_ANGLE_TARGET_MAX_LOSS = 100
 HAND_ID = 0X02
 DELAY_MS = 2000
 DELAY_MS_FUN = 2000
+SKIP_CASE = True # 默认跳过添加mark的case
 
 # 初始化 API 实例（pytest夹具）
 @pytest.fixture
@@ -62,26 +63,34 @@ def serial_api_instance():
                 logger.error(f"Error closing CAN bus: {e}")
 
 # --------------------------- GET 命令测试 ---------------------------
+
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetProtocolVersion(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     major, minor = [0], [0]
     err, major_get, minor_get  = serial_api_instance.HAND_GetProtocolVersion(HAND_ID, major, minor, [])
     assert err == HAND_RESP_SUCCESS, f"获取协议版本失败: err={err}"
     logger.info(f"成功获取协议版本: V{major_get}.{minor_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFirmwareVersion(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     major, minor, revision = [0], [0], [0]
     err, major_get, minor_get, revision_get = serial_api_instance.HAND_GetFirmwareVersion(HAND_ID, major, minor, revision, [])
     assert err == HAND_RESP_SUCCESS, f"获取固件版本失败: err={err}"
     logger.info(f"成功获固件版本: V{major_get}.{minor_get}.{revision_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetHardwareVersion(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     hw_type, hw_ver, boot_version = [0], [0],[0]
     err, hw_type_get, hw_ver_get, boot_version_get = serial_api_instance.HAND_GetHardwareVersion(HAND_ID, hw_type, hw_ver, boot_version, [])
     assert err == HAND_RESP_SUCCESS, f"获取硬件版本失败: err={err}"
     logger.info(f"成功获取硬件版本: V{hw_type_get}.{hw_ver_get}.{boot_version_get}")
 
-
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerPID(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     p = [0]
     i = [0]
     d = [0]
@@ -91,29 +100,36 @@ def test_HAND_GetFingerPID(serial_api_instance):
         assert err == HAND_RESP_SUCCESS, f"获取手指p, i, d, g值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} p, i, d, g值: {p_get},{i_get},{d_get},{g_get}")
 
-
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerCurrentLimit(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     current_limit = [0]
     for finger_id in range(MAX_MOTOR_CNT):
         err, current_limit_get = serial_api_instance.HAND_GetFingerCurrentLimit(HAND_ID, finger_id, current_limit, [])
         assert err == HAND_RESP_SUCCESS, f"获取手指电流限制值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 电流限制值: {current_limit_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerCurrent(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     current = [0]
     for finger_id in range(MAX_MOTOR_CNT):
         err, current_get = serial_api_instance.HAND_GetFingerCurrent(HAND_ID, finger_id, current, [])
         assert err == HAND_RESP_SUCCESS,f"获取手指电流值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 电流值: {current_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerForceTarget(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     force_target = [0]
     for finger_id in range(MAX_MOTOR_CNT):
         err, force_target_get = serial_api_instance.HAND_GetFingerForceTarget(HAND_ID, finger_id, force_target, [])
         assert err == HAND_RESP_SUCCESS,f"获取手指力量目标值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 力量目标值: {force_target_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerForce(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     force_entry_cnt = [0]
     force = [0] * MAX_FORCE_ENTRIES
     for finger_id in range(MAX_MOTOR_CNT):
@@ -121,7 +137,9 @@ def test_HAND_GetFingerForce(serial_api_instance):
         assert err == HAND_RESP_SUCCESS,f"获取手指当前力量值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 力量目标值: {force_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerPosLimit(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     low_limit = [0]
     high_limit = [0]
     for finger_id in range(MAX_MOTOR_CNT):
@@ -129,7 +147,9 @@ def test_HAND_GetFingerPosLimit(serial_api_instance):
         assert err == HAND_RESP_SUCCESS,f"获取手指绝对位置限制值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 绝对位置限制值: {low_limit_get}, {high_limit_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerPosAbs(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     target_pos = [0]
     current_pos = [0]
     for finger_id in range(MAX_MOTOR_CNT):
@@ -137,8 +157,9 @@ def test_HAND_GetFingerPosAbs(serial_api_instance):
         assert err == HAND_RESP_SUCCESS,f"获取手指绝当前绝对位置值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 当前绝对位置值: {target_pos_get}, {current_pos_get}")
 
-
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerPos(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     target_pos = [0]
     current_pos = [0]
     for finger_id in range(MAX_MOTOR_CNT):
@@ -146,7 +167,9 @@ def test_HAND_GetFingerPos(serial_api_instance):
         assert err == HAND_RESP_SUCCESS,f"获取手指绝当前逻辑位置值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 当前逻辑位置值: {target_pos_get}, {current_pos_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerAngle(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     target_angle = [0]
     current_angle = [0]
     for  finger_id in range(MAX_MOTOR_CNT):
@@ -154,14 +177,18 @@ def test_HAND_GetFingerAngle(serial_api_instance):
         assert err == HAND_RESP_SUCCESS,f"获取手指第一关节角度值失败:err={err}"
         logger.info(f"成功获取手指{finger_id} 第一关节角度值: {target_angle_get}, {current_angle_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetThumbRootPos(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     raw_encoder = [0]
     pos = [0]
     err, raw_encoder_get, pos_get = serial_api_instance.HAND_GetThumbRootPos(HAND_ID, raw_encoder, pos, [])
     assert err == HAND_RESP_SUCCESS,f"获取大拇指旋转预设位置值失败: err={err}"
     logger.info(f"成功获取大拇指旋转预设位置值: {raw_encoder_get}, {pos_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerPosAbsAll(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     target_pos = [0] * MAX_MOTOR_CNT
     current_pos = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
@@ -169,8 +196,9 @@ def test_HAND_GetFingerPosAbsAll(serial_api_instance):
     assert err == HAND_RESP_SUCCESS,f"获取所有手指当前的绝对位置值失败: err={err}"
     logger.info(f"成功获取所有手指当前的绝对位置值: {target_pos_get}, {current_pos_get}")
 
-
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerPosAll(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     target_pos = [0] * MAX_MOTOR_CNT
     current_pos = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
@@ -179,15 +207,19 @@ def test_HAND_GetFingerPosAll(serial_api_instance):
     assert err == HAND_RESP_SUCCESS,f"获取所有手指当前的逻辑位置值失败: err={err}"
     logger.info(f"成功获取所有手指当前的逻辑位置值:  {target_pos_get}, {current_pos_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetFingerAngleAll(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     target_angle = [0] * MAX_MOTOR_CNT
     current_angle = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
     err, remtarget_angle_get, current_angle_get= serial_api_instance.HAND_GetFingerAngleAll(HAND_ID, target_angle, current_angle, motor_cnt, [])
     assert err == HAND_RESP_SUCCESS,f"获取所有手指值失败: err={err}"
     logger.info(f"成功获取所有手指当前的逻辑位置值: {remtarget_angle_get}, {current_angle_get}")
-    
+
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')    
 def test_HAND_GetFingerForcePID(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     p = [0]
     i = [0]
     d = [0]
@@ -197,25 +229,33 @@ def test_HAND_GetFingerForcePID(serial_api_instance):
         assert err == HAND_RESP_SUCCESS,f"获取手指力量p, i, d, g值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 力量p, i, d, g值: {p_get}, {i_get},{d_get},{g_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetSelfTestLevel(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     self_test_level = [0]
     err, self_test_level_get = serial_api_instance.HAND_GetSelfTestLevel(HAND_ID, self_test_level, [])
     assert err == HAND_RESP_SUCCESS,f"获取手自检开关状态失败: err={err}"
     logger.info(f"成功获取手自检开关状态: {self_test_level_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetBeepSwitch(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     beep_switch = [0]
     err, beep_switch_get = serial_api_instance.HAND_GetBeepSwitch(HAND_ID, beep_switch, [])
     assert err == HAND_RESP_SUCCESS,f"获取手蜂鸣器开关状态失败: err={err}"
     logger.info(f"成功获取手蜂鸣器开关状态: {beep_switch_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetButtonPressedCnt(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     pressed_cnt = [0]
     err, pressed_cnt_get = serial_api_instance.HAND_GetButtonPressedCnt(HAND_ID, pressed_cnt, [])
     assert err == HAND_RESP_SUCCESS,f"获取手按钮按下次数值失败:  err={err}"
     logger.info(f"成功获取手按钮按下次数值: {pressed_cnt_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_GetUID(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     uid_w0 = [0]
     uid_w1 = [0]
     uid_w2 = [0]
@@ -223,23 +263,27 @@ def test_HAND_GetUID(serial_api_instance):
     assert err == HAND_RESP_SUCCESS,f"获取手UID值失败: err={err}"
     logger.info(f"成功获取手UID值: {uid_w0_get},{uid_w1_get},{uid_w2_get}")
     
-@pytest.mark.skip('功能未实现，只返回err，先跳过')
+@pytest.mark.skipif(True,reason='功能未实现，只返回err，先跳过')
 def test_HAND_GetBatteryVoltage(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     voltage = [0]
     err, voltage_get = serial_api_instance.HAND_GetBatteryVoltage(HAND_ID, voltage, [])
     assert err == HAND_RESP_SUCCESS,f"获取手电池电压值失败: err={err}"
     logger.info(f"成功获取手电池电压值: {voltage_get}")
     
-@pytest.mark.skip('功能未实现，只返回err，先跳过')
+@pytest.mark.skipif(True,reason='功能未实现，只返回err，先跳过')
 def test_HAND_GetUsageStat(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     total_use_time = [0]
     total_open_times = [0] * MAX_MOTOR_CNT
     motor_cnt = MAX_MOTOR_CNT
     err, total_use_time_get,total_open_times_get= serial_api_instance.HAND_GetUsageStat(HAND_ID, total_use_time, total_open_times, motor_cnt, [])
     assert err == HAND_RESP_SUCCESS,f"获取手使用数据值失败: err={err}"
     logger.info(f"成功获取手使用数据值: {total_use_time_get},{total_open_times_get}")
-    
+
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')    
 def test_GetCalidata(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     end_pos = [0] * MAX_MOTOR_CNT
     start_pos = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
@@ -248,30 +292,35 @@ def test_GetCalidata(serial_api_instance):
     err, end_pos_get, start_pos_get, thumb_root_pos_get = serial_api_instance.HAND_GetCaliData(HAND_ID, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, [])
     assert err == HAND_RESP_SUCCESS, f"获取矫正数据失败: {err}"
     logger.info(f"成功获取矫正数据, end_pos: {end_pos_get}, start_pos: {start_pos_get}, thumb_root_pos: {thumb_root_pos_get}, ")
-    
+
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')    
 def test_GetfingerStopParams(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     speed, stop_current, stop_after_period, retry_interval = [0], [0], [0], [0]
     for i in range(MAX_MOTOR_CNT):
         err, speed_get, stop_current_get, stop_after_period_get, retry_interval_get = serial_api_instance.HAND_GetFingerStopParams(HAND_ID, i, speed, stop_current, stop_after_period, retry_interval, [])
         assert err == HAND_RESP_SUCCESS, f"获取手指停止参数失败: {err}"
         logger.info(f"成功获取手指停止参数: 速度: {speed_get}, 暂停电流:{stop_current_get}, 暂停间隔:{stop_after_period_get}, 重试间隔:{retry_interval_get}")
-        
+
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')        
 def test_GetManufactureData(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     sub_model, hw_revision, serial_number, customer_tag = [0], [0], [0], [0]
     err, sub_model_get, hw_revision_get, serial_number_get, customer_tag_get = serial_api_instance.HAND_GetManufactureData(HAND_ID, sub_model, hw_revision, serial_number, customer_tag, [])
     assert err == HAND_RESP_SUCCESS, f"manufacture_data_get: {err}\n"
     logger.info(f"sub_model: {sub_model_get}, hw_revision: {hw_revision_get}, serial_number: {serial_number_get}, customer_tag: {customer_tag_get}")
 
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_GetFingerSpeedCtrlParams(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     brake_distance, accel_distance, speed_ratio = [0], [0], [0]
     err, brake_distance_get, accel_distance_get, speed_ratio_get = serial_api_instance.HAND_GetFingerSpeedCtrlParams(HAND_ID, brake_distance, accel_distance, speed_ratio, [])
     assert err == HAND_RESP_SUCCESS, f"test_speed_ctrl_params_get: {err}\n"
     logger.info(f"brake_distance: {brake_distance_get}, accel_distance: {accel_distance_get}, speed_ratio: {speed_ratio_get}")
 
 
-
 # # --------------------------- SET 命令测试 ---------------------------
-# @pytest.mark.skip('测试通过，先跳过')  
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_Reset(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     RESET_MODE ={
@@ -295,16 +344,18 @@ def test_HAND_Reset(serial_api_instance):
     err = serial_api_instance.HAND_Reset(HAND_ID, RESET_MODE.get('工作模式'), remote_err)
     assert err == HAND_RESP_SUCCESS,f"恢复默认值失败: err={err}"
     logger.info('恢复默认值成功')
+    time.sleep(15)
     
-# @pytest.mark.skip('测试通过，先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_PowerOff(serial_api_instance):
     remote_err = []
     delay_milli_seconds_impl(DELAY_MS_FUN)
     err = serial_api_instance.HAND_PowerOff(HAND_ID, remote_err)
     assert err == HAND_RESP_SUCCESS,f"设置关机失败: err={err},remote_err={remote_err[0]}"
     logger.info('设置关机成功成功')
+    time.sleep(15)
 
-@pytest.mark.skip('测试设置设备ID，设置范围外的值不报错，提bug#5749 ，先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='设置范围外的值不报错，提bug#5749 ，先跳过')
 def test_HAND_SetID(serial_api_instance):
     """测试设置设备ID功能（单函数实现，适配pytest夹具）"""
     # 校验夹具实例有效性
@@ -323,7 +374,7 @@ def test_HAND_SetID(serial_api_instance):
             (0,     "无效ID-边界值0"),
             (-1,    "无效ID-负数-1"),
             (248,   "无效ID-边界值248"),
-            (256,   "无效ID-超出字节范围256"),
+            (256,   "无效ID-超出字节范围256")
         ]
 
         for new_id, desc in test_cases:
@@ -400,7 +451,7 @@ def test_HAND_SetID(serial_api_instance):
             print(f"  {case}：{result}")
         print("==================================")
 
-@pytest.mark.skip('测试设置finger pid，连续设置多个手指参数报错，提bug：#5722，#5723 ，先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='连续设置多个手指参数报错，提bug：#5722，#5723 ，先跳过')
 def test_HAND_SetFingerPID(serial_api_instance):
     """手指PID参数设置功能测试 - 单变量控制"""
     
@@ -584,7 +635,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置current limit, 输入范围外的值不报错，已经报成功，先跳过，提bug：#5738')
+@pytest.mark.skipif(SKIP_CASE,reason='输入范围外的值不报错，已经报成功，先跳过，提bug：#5738')
 def test_HAND_SetFingerCurrentLimit(serial_api_instance):
     # 默认参数值
     DEFAULT_CURRENT = 1299
@@ -660,7 +711,7 @@ def test_HAND_SetFingerCurrentLimit(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置force target，输入异常值不报错，显示设置成功，报bug:#5739,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='输入异常值不报错，显示设置成功，报bug:#5739,先跳过')
 def test_HAND_SetFingerForceTarget(serial_api_instance):
     # 默认参数值
     DEFAULT_FORCE_TARGET = 0
@@ -735,7 +786,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置pos limit, 连续测试多个手指，报无效值错误，提bug: #5738,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='输连续测试多个手指，报无效值错误，提bug: #5738,先跳过')
 def test_HAND_SetFingerPosLimit(serial_api_instance):
     # 定义测试常量
     end_pos = [0] * MAX_MOTOR_CNT
@@ -835,7 +886,7 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('单独跑测试是可以通过，研发还需要优化，先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='研发还需要优化，先跳过')
 def test_HAND_FingerStart(serial_api_instance):
     finger_id_bits = 0x01
     remote_err = []
@@ -844,7 +895,7 @@ def test_HAND_FingerStart(serial_api_instance):
     assert err == HAND_RESP_SUCCESS, f"设置开始移动手指失败，错误码: err={err},remote_err={remote_err[0]}"
     logger.info(f'设置开始移动手指成功')
     
-@pytest.mark.skip('单独跑测试是可以通过，研发还需要优化，先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='研发还需要优化，先跳过')
 def test_HAND_FingerStop(serial_api_instance):
     finger_id_bits = 0x01
     remote_err = []
@@ -853,7 +904,7 @@ def test_HAND_FingerStop(serial_api_instance):
     assert err == HAND_RESP_SUCCESS, f"设置停止移动手指失败，错误码: err={err},remote_err={remote_err[0]}"
     logger.info(f'设置停止移动手指成功')
 
-@pytest.mark.skip('测试设置finger pos abs all ,raw_pos异常值不报错,speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常, 提bug:#5741,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='先跳过raw_pos异常值不报错,speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常, 提bug:#5741,先跳过')
 def test_HAND_SetFingerPosAbsAll(serial_api_instance):
     # 定义测试常量
     HAND_ID = 0x02
@@ -985,7 +1036,7 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置finger pos：raw_pos异常值不报错,speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常, 提bug:#5741,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='raw_pos异常值不报错,speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常, 提bug:#5741,先跳过')
 def test_HAND_SetFingerPos(serial_api_instance):
     # 默认参数值
     DEFAULT_POS = 0     # 位置默认值
@@ -1092,7 +1143,7 @@ def test_HAND_SetFingerPos(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
         
-@pytest.mark.skip('测试设置finger pos all，pos异常值不报错，speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常')
+@pytest.mark.skipif(SKIP_CASE,reason='pos异常值不报错，speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常')
 def test_HAND_SetFingerPosAll(serial_api_instance):
     # 定义测试常量
     # 默认参数值
@@ -1204,8 +1255,8 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
         for case, result in test_results:
             logger.info(f"{case}: {result}")
         logger.info("=======================")
-        
-@pytest.mark.skip('get finger angle range ')
+
+@pytest.mark.skipif(SKIP_CASE,reason='debugzhong,先跳过')        
 def test_get_angle_range(serial_api_instance, finger_id=0):
     """
     测试获取指定手指的实际角度极值范围（使用单手指API）
@@ -1267,7 +1318,7 @@ def test_get_angle_range(serial_api_instance, finger_id=0):
         raise
 
 
-@pytest.mark.skip('测试设置finger angle 测试pass')
+@pytest.mark.skipif(SKIP_CASE,reason='debugzhong,先跳过')
 def test_HAND_SetFingerAngle(serial_api_instance):    
     # 核心常量
     DEFAULT_SPEED = 127
@@ -1359,7 +1410,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
         for case, res in test_results:
             print(f"{case}: {res}")
 
-@pytest.mark.skip('finger angle all 测试通过')
+@pytest.mark.skipif(SKIP_CASE,reason='debugzhong,先跳过')
 def test_HAND_SetFingerAngleAll(serial_api_instance):
     """批量设置所有手指角度测试（严格遵循分组默认值规则）"""
     # 核心常量（对齐单手指验收用例）
@@ -1487,9 +1538,8 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
         print(f"总用例: {total}, 通过: {passed}, 失败: {total - passed}")
         for case, res in test_results:
             print(f"{case}: {res}")
-     
 
-@pytest.mark.skip('测试设置thumb root pos,pos和speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常,提bug:#5742,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='pos和speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常,提bug:#5742,先跳过')
 def test_HAND_SetThumbRootPos(serial_api_instance):
     # 定义测试常量
     # 默认参数值
@@ -1595,7 +1645,7 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skip('测试设置finger force pid，设置多个手指的正常值，报无效值错误，提bug：#5723，先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='置多个手指的正常值，报无效值错误，提bug：#5723，先跳过')
 def test_HAND_SetFingerForcePID(serial_api_instance):
     # 默认参数值（与test_HAND_SetFingerPID保持一致）
     DEFAULT_P = 25000
@@ -1780,15 +1830,15 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
         
-# @pytest.mark.skip('测试通过')
-def test_HAND_ResetForce(serial_api_instance):# 修改api调用接口函数，添加none后测试pass
+@pytest.mark.skipif(SKIP_CASE,reason='debug中，先跳过')
+def test_HAND_ResetForce(serial_api_instance):
     remote_err = []
     delay_milli_seconds_impl(DELAY_MS_FUN)
     err = serial_api_instance.HAND_ResetForce(HAND_ID, remote_err)
     assert err == HAND_RESP_SUCCESS, f"重置力量值，错误码: err={err},remote_err={remote_err[0]}"
     logger.info("成功重置力量值")
 
-# @pytest.mark.skip('测试通过')
+@pytest.mark.skipif(SKIP_CASE,reason='debug中，先跳过')
 def test_HAND_SetSelfTestLevel(serial_api_instance):
     SELF_TEST_LEVEL = {
         '等待指令': 0,
@@ -1835,7 +1885,7 @@ def test_HAND_SetSelfTestLevel(serial_api_instance):
     if err != HAND_RESP_SUCCESS:
         logger.error(f"恢复默认自检级别失败，错误码: err={err},remote_err={remote_err[0]}")
 
-# @pytest.mark.skip('调试通过')
+@pytest.mark.skipif(SKIP_CASE,reason='debug中，先跳过')
 def test_HAND_SetBeepSwitch(serial_api_instance):
     BEEP_STATUS = {
         'OFF': 0,
@@ -1880,7 +1930,7 @@ def test_HAND_SetBeepSwitch(serial_api_instance):
     else:
         logger.info('蜂鸣器开关已恢复默认状态')
 
-# @pytest.mark.skip('调试通过')
+@pytest.mark.skipif(SKIP_CASE,reason='debug中，先跳过')
 def test_HAND_Beep(serial_api_instance): # 设置时长慧报3的错误码
     duration = 500
     delay_milli_seconds_impl(DELAY_MS_FUN)
@@ -1888,7 +1938,7 @@ def test_HAND_Beep(serial_api_instance): # 设置时长慧报3的错误码
     assert err == HAND_RESP_SUCCESS,f"设置蜂鸣器时长失败:  err={err}"
     logger.info(f'成功设置蜂鸣器时长：{duration}')
     
-@pytest.mark.skip('按钮不支持,此case暂时跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='按钮不支持,此case暂时跳过')
 def test_HAND_SetButtonPressedCnt(serial_api_instance):
     # 测试正常范围（0-255）
     # 测试最小值
@@ -1988,7 +2038,7 @@ def test_HAND_SetButtonPressedCnt(serial_api_instance):
     else:
         assert False, "设置负数（-1）未触发ValueError"
 
-@pytest.mark.skip('初始化，初始化要先把自检等级设置成0，才能生效')
+@pytest.mark.skipif(SKIP_CASE,reason='初始化，初始化要先把自检等级设置成0，才能生效')
 def test_HAND_StartInit(serial_api_instance):
     remote_err = []
     delay_milli_seconds_impl(DELAY_MS_FUN)
