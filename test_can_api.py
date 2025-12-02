@@ -899,10 +899,6 @@ def test_HAND_FingerStop(serial_api_instance):
 
 @pytest.mark.skipif(SKIP_CASE,reason='先跳过raw_pos异常值不报错,speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常, 提bug:#5741,先跳过')
 def test_HAND_SetFingerPosAbsAll(serial_api_instance):
-    # 定义测试常量
-    HAND_ID = 0x02
-    MAX_MOTORS = 6  # 假设手有6个手指
-    
     # 默认参数值
     DEFAULT_POS = 0     # 位置默认值
     DEFAULT_SPEED = 127   # 速度默认值
@@ -927,18 +923,18 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
             (start_pos_get,       f"所有手指绝对位置最小值{start_pos_get}"),
             (end_pos_get,         f"所有手指绝对位置最大值{end_pos_get}"),
             # 修复：无效的列表构造
-            ([0]*MAX_MOTORS,      f"所有手指绝对位置边界值{[0]*MAX_MOTORS}"),
-            ([65535]*MAX_MOTORS,      f"所有手指绝对位置边界值{[65535]*MAX_MOTORS}"),
-            ([-1]*MAX_MOTORS,     f"所有手指绝对位置边界值{[-1]*MAX_MOTORS}"),
-            ([65536] * MAX_MOTORS,   "所有手指绝对位置边界值65536"),
+            ([0]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[0]*MAX_MOTOR_CNT}"),
+            ([65535]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[65535]*MAX_MOTOR_CNT}"),
+            ([-1]*MAX_MOTOR_CNT,     f"所有手指绝对位置边界值{[-1]*MAX_MOTOR_CNT}"),
+            ([65536] * MAX_MOTOR_CNT,   "所有手指绝对位置边界值65536"),
         ],
         'speed': [
-            ([0]*MAX_MOTORS,       "手指移动速度最小值0"),
-            ([127]*MAX_MOTORS,     "手指移动速度中间值127"),
-            ([255]*MAX_MOTORS,     "手指移动速度最大值255"),
+            ([0]*MAX_MOTOR_CNT,       "手指移动速度最小值0"),
+            ([127]*MAX_MOTOR_CNT,     "手指移动速度中间值127"),
+            ([255]*MAX_MOTOR_CNT,     "手指移动速度最大值255"),
             # 修复：无效的列表构造
-            ([-1]*MAX_MOTORS,      "手指移动速度边界值-1"),
-            ([256]*MAX_MOTORS,     "手指移动速度边界值256")
+            ([-1]*MAX_MOTOR_CNT,      "手指移动速度边界值-1"),
+            ([256]*MAX_MOTOR_CNT,     "手指移动速度边界值256")
         ]
     }
     
@@ -952,11 +948,11 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
         # 测试位置参数（固定速度为默认值）
         logger.info(f"测试位置参数")
         for pos, desc in PARAM_TEST_DATA['pos_abs_all']:
-            speed_array = [DEFAULT_SPEED] * MAX_MOTORS
+            speed_array = [DEFAULT_SPEED] * MAX_MOTOR_CNT
             remote_err = []
             delay_milli_seconds_impl(DELAY_MS)
             err = serial_api_instance.HAND_SetFingerPosAbsAll(
-                HAND_ID, pos, speed_array, MAX_MOTORS, remote_err
+                HAND_ID, pos, speed_array, MAX_MOTOR_CNT, remote_err
             )
             
             # 修复：检查所有位置值的有效性
@@ -979,11 +975,11 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
         # 测试速度参数（固定位置为默认值）
         logger.info(f"测试速度参数")
         for speed, desc in PARAM_TEST_DATA['speed']:
-            pos_array = [DEFAULT_POS] * MAX_MOTORS
+            pos_array = [DEFAULT_POS] * MAX_MOTOR_CNT
             remote_err = []
             delay_milli_seconds_impl(DELAY_MS)
             err = serial_api_instance.HAND_SetFingerPosAbsAll(
-                HAND_ID, pos_array, speed, MAX_MOTORS, remote_err
+                HAND_ID, pos_array, speed, MAX_MOTOR_CNT, remote_err
             )
             
             # 同样，建议检查所有速度值的有效性
@@ -1005,9 +1001,9 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
         delay_milli_seconds_impl(DELAY_MS)
         err = serial_api_instance.HAND_SetFingerPosAbsAll(
             HAND_ID, 
-            [DEFAULT_POS] * MAX_MOTORS,
-            [DEFAULT_SPEED] * MAX_MOTORS,
-            MAX_MOTORS,
+            [DEFAULT_POS] * MAX_MOTOR_CNT,
+            [DEFAULT_SPEED] * MAX_MOTOR_CNT,
+            MAX_MOTOR_CNT,
             remote_err
         )
         assert err == HAND_RESP_SUCCESS, \
@@ -1140,26 +1136,25 @@ def test_HAND_SetFingerPos(serial_api_instance):
 def test_HAND_SetFingerPosAll(serial_api_instance):
     # 定义测试常量
     # 默认参数值
-    MAX_MOTORS = 6
     DEFAULT_POS = 0     # 位置默认值
     DEFAULT_SPEED = 127   # 速度默认值
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'pos_all': [
-            ([0]*MAX_MOTORS,      f"所有手指绝对位置边界值{[0]*MAX_MOTORS}"),
-            ([65535]*MAX_MOTORS,      f"所有手指绝对位置边界值{[65535]*MAX_MOTORS}"),
+            ([0]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[0]*MAX_MOTOR_CNT}"),
+            ([65535]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[65535]*MAX_MOTOR_CNT}"),
              # 修复：无效的列表构造
-            ([-1]*MAX_MOTORS,     f"所有手指绝对位置边界值{[-1]*MAX_MOTORS}"),
-            ([65536] * MAX_MOTORS,   "所有手指绝对位置边界值65536"),
+            ([-1]*MAX_MOTOR_CNT,     f"所有手指绝对位置边界值{[-1]*MAX_MOTOR_CNT}"),
+            ([65536] * MAX_MOTOR_CNT,   "所有手指绝对位置边界值65536"),
         ],
        'speed': [
-            ([0]*MAX_MOTORS,       "手指移动速度最小值0"),
-            ([127]*MAX_MOTORS,     "手指移动速度中间值127"),
-            ([255]*MAX_MOTORS,     "手指移动速度最大值255"),
+            ([0]*MAX_MOTOR_CNT,       "手指移动速度最小值0"),
+            ([127]*MAX_MOTOR_CNT,     "手指移动速度中间值127"),
+            ([255]*MAX_MOTOR_CNT,     "手指移动速度最大值255"),
             # 修复：无效的列表构造
-            ([-1]*MAX_MOTORS,      "手指移动速度边界值-1"),
-            ([256]*MAX_MOTORS,     "手指移动速度边界值256")
+            ([-1]*MAX_MOTOR_CNT,      "手指移动速度边界值-1"),
+            ([256]*MAX_MOTOR_CNT,     "手指移动速度边界值256")
         ]
     }
     
