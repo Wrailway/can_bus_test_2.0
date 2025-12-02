@@ -746,6 +746,19 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
                     assert err != HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置无效目标力未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
                     test_results.append((f"手指{finger_id} 目标力测试({desc})", "通过(预期失败)"))
+                    
+                """------------------- 单个手指测试完成后立即恢复默认值 -------------------"""
+                logger.info(f"\n===== 恢复手指 {finger_id} 的默认目标力 =====")
+                remote_err_reset = []
+                delay_milli_seconds_impl(DELAY_MS)
+                err_reset = serial_api_instance.HAND_SetFingerForceTarget(
+                    HAND_ID, finger_id, 
+                    DEFAULT_FORCE_TARGET, 
+                    remote_err_reset
+                )
+                assert err_reset == HAND_RESP_SUCCESS, \
+                    f"恢复手指 {finger_id} 默认目标力失败, 错误码: err={err_reset},remote_err={remote_err_reset[0] if remote_err_reset else '无'}"
+                logger.info(f"手指 {finger_id} 已恢复默认目标力: {DEFAULT_FORCE_TARGET}")
             
             logger.info(f"手指 {finger_id} 目标力设置测试完成")
         
@@ -1630,7 +1643,7 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skipif(SKIP_CASE,reason='置多个手指的正常值，报无效值错误，提bug：#5723，先跳过')
+@pytest.mark.skipif(False,reason='置多个手指的正常值，报无效值错误，提bug：#5723，先跳过')
 def test_HAND_SetFingerForcePID(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 默认参数值（与test_HAND_SetFingerPID保持一致）
