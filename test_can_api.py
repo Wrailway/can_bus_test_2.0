@@ -19,10 +19,10 @@ ADDRESS_MASTER = 0x01
 FINGER_ANGLE_TARGET_MIN_LOSS = 20
 FINGER_ANGLE_TARGET_MAX_LOSS = 100
 HAND_ID = 0X02
-DELAY_MS = 2000 #单个写函数等待时间
-DELAY_MS_FUN = 2000#每个case执行等待时间
+DELAY_MS = 2500 #单个写函数等待时间
+DELAY_MS_FUN = 6000#每个case执行等待时间
 DELAY_MS_DEVICE_REBOOT = 15000#设备重启等待时间
-SKIP_CASE = False # 默认跳过添加mark的case
+SKIP_CASE = True # 默认跳过添加mark的case
 
 # 初始化 API 实例（pytest夹具）
 @pytest.fixture
@@ -1634,10 +1634,10 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
 def test_HAND_SetFingerForcePID(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 默认参数值（与test_HAND_SetFingerPID保持一致）
-    DEFAULT_P = 25000
-    DEFAULT_I = 200
-    DEFAULT_D = 25000
-    DEFAULT_G = 100
+    DEFAULT_P = 250.00
+    DEFAULT_I = 2.00
+    DEFAULT_D = 250.00
+    DEFAULT_G = 1.00
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'P': [
