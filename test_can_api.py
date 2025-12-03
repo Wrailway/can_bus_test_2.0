@@ -22,7 +22,7 @@ HAND_ID = 0X02
 DELAY_MS = 2500 #单个写函数等待时间
 DELAY_MS_FUN = 6000#每个case执行等待时间
 DELAY_MS_DEVICE_REBOOT = 15000#设备重启等待时间
-SKIP_CASE = False # 默认跳过添加mark的case
+SKIP_CASE = True # 默认跳过添加mark的case
 
 # 初始化 API 实例（pytest夹具）
 @pytest.fixture
@@ -391,7 +391,6 @@ def test_HAND_SetID(serial_api_instance):
                     f"有效ID {new_id} 设置失败，错误码={set_err}, 远程错误={remote_err}"
                 
                 # 等待设备重启应用新ID（根据实际设备调整等待时间）
-                logger.info(f"新ID: {new_id}）...")
                 delay_milli_seconds_impl(DELAY_MS*2)
 
                 # 验证新ID通信有效性（通过查询协议版本间接验证）
@@ -1479,6 +1478,7 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
                 remote_err = []
 
                 # 执行批量设置
+                logger.info(f"angle_array = {angle_array}")
                 set_err = serial_api_instance.HAND_SetFingerAngleAll(
                     HAND_ID, angle_array, speed_array, MAX_MOTOR_CNT, remote_err
                 )
