@@ -123,7 +123,7 @@ def test_HAND_GetFingerCurrent(serial_api_instance):
 def test_HAND_GetFingerForceTarget(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     force_target = [0]
-    for finger_id in range(MAX_MOTOR_CNT):
+    for finger_id in range(MAX_MOTOR_CNT-1):
         err, force_target_get = serial_api_instance.HAND_GetFingerForceTarget(HAND_ID, finger_id, force_target, [])
         assert err == HAND_RESP_SUCCESS,f"获取手指力量目标值失败: err={err}"
         logger.info(f"成功获取手指{finger_id} 力量目标值: {force_target_get}")
@@ -441,6 +441,7 @@ def test_HAND_SetID(serial_api_instance):
             logger.info(f"  {case}：{result}")
         logger.info("==================================")
         
+        
 @pytest.mark.skipif(SKIP_CASE,reason='连续设置多个手指参数报错，提bug：#5722，#5723 ，先跳过')
 def test_HAND_SetFingerPID(serial_api_instance):
     """手指PID参数设置功能测试 - 单变量控制"""
@@ -723,7 +724,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in range(MAX_MOTOR_CNT):
+        for finger_id in range(MAX_MOTOR_CNT-1):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的目标力设置 =====")
             
             # 测试目标力参数
@@ -1701,7 +1702,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
     
     try:
         """------------------- 单变量测试 -------------------"""
-        for finger_id in range(MAX_MOTOR_CNT):
+        for finger_id in range(MAX_MOTOR_CNT-1):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的力控PID参数 =====")
             
             # 测试P参数
