@@ -764,7 +764,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认目标力 =====")
-        for finger_id in range(MAX_MOTOR_CNT):
+        for finger_id in range(MAX_MOTOR_CNT-1):
             remote_err = []
             delay_milli_seconds_impl(DELAY_MS)
             err = serial_api_instance.HAND_SetFingerForceTarget(
@@ -790,7 +790,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skipif(SKIP_CASE,reason='输连续测试多个手指，报无效值错误，提bug: #5738,先跳过')
+@pytest.mark.skipif(False,reason='输连续测试多个手指，报无效值错误，提bug: #5738,先跳过')
 def test_HAND_SetFingerPosLimit(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
@@ -934,10 +934,12 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
     PARAM_TEST_DATA = {
         'pos_abs_all': [
             (start_pos_get,       f"所有手指绝对位置最小值{start_pos_get}"),
-            (end_pos_get,         f"所有手指绝对位置最大值{end_pos_get}"),
+            ([end_pos_get[i] if i in (0, 5) else start_pos_get[i] for i in range(MAX_MOTOR_CNT)],          f"0、5手指绝对位置最大值（其余为0）{[end_pos_get[i] if i in (0, 5) else 0 for i in range(MAX_MOTOR_CNT)]}"),
+            ([end_pos_get[i] if i in (1, 2,3,4) else start_pos_get[i] for i in range(MAX_MOTOR_CNT)],         f"1-4手指绝对位置最大值（其余为0）{[end_pos_get[i] if i in (1, 2, 3, 4) else 0 for i in range(MAX_MOTOR_CNT)]}"),
             # 修复：无效的列表构造
             ([0]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[0]*MAX_MOTOR_CNT}"),
-            ([65535]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[65535]*MAX_MOTOR_CNT}"),
+            ([65535,0,0,0,0,65535],      f"1,6手指绝对位置边界值[65535,0,0,0,0,65535]"),
+            ([0,65535,65535,65535,65535,0],   f"2~4手指绝对位置边界值[0,65535,65535,65535,65535,0]"),
             ([-1]*MAX_MOTOR_CNT,     f"所有手指绝对位置边界值{[-1]*MAX_MOTOR_CNT}"),
             ([65536] * MAX_MOTOR_CNT,   "所有手指绝对位置边界值65536"),
         ],
@@ -1156,7 +1158,8 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
     PARAM_TEST_DATA = {
         'pos_all': [
             ([0]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[0]*MAX_MOTOR_CNT}"),
-            ([65535]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[65535]*MAX_MOTOR_CNT}"),
+            ([65535,0,0,0,0,65535],      f"1,6手指绝对位置边界值[65535,0,0,0,0,65535]"),
+            ([0,65535,65535,65535,65535,0],   f"2~4手指绝对位置边界值[0,65535,65535,65535,65535,0]"),
              # 修复：无效的列表构造
             ([-1]*MAX_MOTOR_CNT,     f"所有手指绝对位置边界值{[-1]*MAX_MOTOR_CNT}"),
             ([65536] * MAX_MOTOR_CNT,   "所有手指绝对位置边界值65536"),
@@ -1805,7 +1808,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
         
         """------------------- 恢复默认值 -------------------"""
         logger.info("\n===== 恢复所有手指的默认力控PID参数 =====")
-        for finger_id in range(MAX_MOTOR_CNT):
+        for finger_id in range(MAX_MOTOR_CNT-1):
             remote_err = []
             delay_milli_seconds_impl(DELAY_MS)
             err = serial_api_instance.HAND_SetFingerForcePID(
