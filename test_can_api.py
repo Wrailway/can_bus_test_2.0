@@ -1443,8 +1443,7 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skipif(SKIP_CASE,reason='debugzhong,先跳过')        
-def test_get_angle_range(serial_api_instance, finger_id=0):
+def get_angle_range(serial_api_instance, finger_id=0):
     """
     测试获取指定手指的实际角度极值范围（使用单手指API）
     :param serial_api_instance: 串口API实例
@@ -1515,7 +1514,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
     actual_angle_min = []
     actual_angle_max = []
     for finger_id in range(MAX_MOTOR_CNT):
-        finger_min, finger_max = test_get_angle_range(serial_api_instance, finger_id)
+        finger_min, finger_max = get_angle_range(serial_api_instance, finger_id)
         actual_angle_min.append(finger_min)
         actual_angle_max.append(finger_max)
     logger.info(f'actual_angle_min = {actual_angle_min}')
@@ -1607,7 +1606,7 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
     actual_angle_max = []
     finger_init_vals = []  # 记录每个手指测试前的初始值
     for finger_id in range(MAX_MOTOR_CNT):
-        finger_min, finger_max = test_get_angle_range(serial_api_instance, finger_id)
+        finger_min, finger_max = get_angle_range(serial_api_instance, finger_id)
         actual_angle_min.append(finger_min)
         actual_angle_max.append(finger_max)
         # 读取并记录当前手指的初始值（用于后续恢复）
