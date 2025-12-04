@@ -442,6 +442,21 @@ def test_HAND_SetID(serial_api_instance):
         logger.info("==================================")
         
         
+def get_HAND_PID(serial_api_instance,finger_id):
+    p = [0]
+    i = [0]
+    d = [0]
+    g = [0]
+    return serial_api_instance.HAND_GetFingerPID(HAND_ID, finger_id, p, i, d, g, [])
+
+def get_HAND_FORCE_PID(serial_api_instance,finger_id):
+    p = [0]
+    i = [0]
+    d = [0]
+    g = [0]
+    return serial_api_instance.HAND_GetFingerForcePID(HAND_ID, finger_id, p, i, d, g, [])
+            
+        
 @pytest.mark.skipif(SKIP_CASE,reason='连续设置多个手指参数报错，提bug：#5722，#5723 ，先跳过')
 def test_HAND_SetFingerPID(serial_api_instance):
     """手指PID参数设置功能测试 - 单变量控制"""
@@ -451,6 +466,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
     DEFAULT_I = 2.0
     DEFAULT_D = 250.0
     DEFAULT_G = 1.0
+    MAX_LOSS = 1e-2
     
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
@@ -521,6 +537,13 @@ def test_HAND_SetFingerPID(serial_api_instance):
                 if 1.0 <= p_value <= 500.00:  # 有效P值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效P值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                        
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_HAND_PID(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效P值失败: {desc}, 错误码: err={err}"
+                    assert abs(p_value - value[1]) < MAX_LOSS, \
+                        f"手指 {finger_id} 设置的P值: {p_value}, 与读取的P值:{value[1]}不一致"
                     test_results.append((f"手指{finger_id} P值测试({desc})", "通过"))
                 else:  # 无效P值
                     assert err != HAND_RESP_SUCCESS, \
@@ -544,6 +567,12 @@ def test_HAND_SetFingerPID(serial_api_instance):
                 if 0.0 <= i_value <= 100.00:  # 有效I值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效I值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_HAND_PID(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效I值失败: {desc}, 错误码: err={err}"
+                    assert abs(i_value - value[2]) < MAX_LOSS, \
+                        f"手指 {finger_id} 设置的I值: {i_value}, 与读取的I值:{value[2]}不一致"
                     test_results.append((f"手指{finger_id} I值测试({desc})", "通过"))
                 else:
                     assert err != HAND_RESP_SUCCESS, \
@@ -567,6 +596,12 @@ def test_HAND_SetFingerPID(serial_api_instance):
                 if 0.0 <= d_value <= 500.00:  # 有效D值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效D值失败: {desc}, 错误码:  err={err},remote_err={remote_err[0]}"
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_HAND_PID(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效D值失败: {desc}, 错误码: err={err}"
+                    assert abs(d_value - value[3]) < MAX_LOSS, \
+                        f"手指 {finger_id} 设置的D值: {d_value}, 与读取的D值:{value[3]}不一致"
                     test_results.append((f"手指{finger_id} D值测试({desc})", "通过"))
                 else:
                     assert err != HAND_RESP_SUCCESS, \
@@ -590,6 +625,12 @@ def test_HAND_SetFingerPID(serial_api_instance):
                 if 0.01 <= g_value <= 1.00:  # 有效G值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效G值失败: {desc}, 错误码:err={err},remote_err={remote_err[0]}"
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_HAND_PID(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效G值失败: {desc}, 错误码: err={err}"
+                    assert abs(g_value - value[4]) < MAX_LOSS, \
+                        f"手指 {finger_id} 设置的G值: {g_value}, 与读取的G值:{value[4]}不一致"
                     test_results.append((f"手指{finger_id} G值测试({desc})", "通过"))
                 else:
                     assert err != HAND_RESP_SUCCESS, \
@@ -1799,6 +1840,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
     DEFAULT_I = 2.00
     DEFAULT_D = 250.00
     DEFAULT_G = 1.00
+    MAX_LOSS = 1e-2
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'P': [
@@ -1868,6 +1910,12 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
                 if 1.0 <= p_value <= 500.00:  # 有效P值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效P值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_HAND_FORCE_PID(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效P值失败: {desc}, 错误码: err={err}"
+                    assert abs(p_value - value[1]) < MAX_LOSS, \
+                        f"手指 {finger_id} 设置的P值: {p_value}, 与读取的P值:{value[1]}不一致"
                     test_results.append((f"手指{finger_id} P值测试({desc})", "通过"))
                 else:  # 无效P值
                     assert err != HAND_RESP_SUCCESS, \
@@ -1892,6 +1940,12 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
                 if 0 <= i_value <= 100.00:  # 有效I值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效I值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_HAND_FORCE_PID(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效I值失败: {desc}, 错误码: err={err}"
+                    assert abs(i_value - value[2]) < MAX_LOSS, \
+                        f"手指 {finger_id} 设置的I值: {i_value}, 与读取的I值:{value[2]}不一致"
                     test_results.append((f"手指{finger_id} I值测试({desc})", "通过"))
                 else:  # 无效I值
                     assert err != HAND_RESP_SUCCESS, \
@@ -1916,6 +1970,12 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
                 if 0 <= d_value <= 500.00:  # 有效D值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效D值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_HAND_FORCE_PID(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效D值失败: {desc}, 错误码: err={err}"
+                    assert abs(d_value - value[3]) < MAX_LOSS, \
+                        f"手指 {finger_id} 设置的D值: {d_value}, 与读取的D值:{value[3]}不一致"
                     test_results.append((f"手指{finger_id} D值测试({desc})", "通过"))
                 else:  # 无效D值
                     assert err != HAND_RESP_SUCCESS, \
@@ -1940,6 +2000,12 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
                 if 0.01 <= g_value <= 1.00:  # 有效G值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效G值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_HAND_FORCE_PID(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效G值失败: {desc}, 错误码: err={err}"
+                    assert abs(g_value - value[4]) < MAX_LOSS, \
+                        f"手指 {finger_id} 设置的G值: {g_value}, 与读取的G值:{value[4]}不一致"
                     test_results.append((f"手指{finger_id} G值测试({desc})", "通过"))
                 else:  # 无效G值
                     assert err != HAND_RESP_SUCCESS, \
