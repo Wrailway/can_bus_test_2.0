@@ -790,7 +790,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skipif(False,reason='输连续测试多个手指，报无效值错误，提bug: #5738,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='输连续测试多个手指，报无效值错误，提bug: #5738,先跳过')
 def test_HAND_SetFingerPosLimit(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
