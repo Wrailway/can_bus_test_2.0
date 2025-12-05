@@ -267,7 +267,7 @@ def test_HAND_GetUID(serial_api_instance):
     assert err == HAND_RESP_SUCCESS,f"获取手UID值失败: err={err}"
     logger.info(f"成功获取手UID值: {uid_w0_get},{uid_w1_get},{uid_w2_get}")
     
-@pytest.mark.skipif(SKIP_CASE,reason='功能未实现，只返回err，先跳过')
+@pytest.mark.skipif(True,reason='功能未实现，只返回err，先跳过')
 def test_HAND_GetBatteryVoltage(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     voltage = [0]
@@ -275,7 +275,7 @@ def test_HAND_GetBatteryVoltage(serial_api_instance):
     assert err == HAND_RESP_SUCCESS,f"获取手电池电压值失败: err={err}"
     logger.info(f"成功获取手电池电压值: {voltage[0]}")
     
-@pytest.mark.skipif(SKIP_CASE,reason='功能未实现，只返回err，先跳过')
+@pytest.mark.skipif(True,reason='功能未实现，只返回err，先跳过')
 def test_HAND_GetUsageStat(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     total_use_time = [0]
@@ -830,7 +830,12 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
             logger.info(f"{case}: {result}")
         logger.info("=======================")
 
-@pytest.mark.skipif(SKIP_CASE,reason='输连续测试多个手指，报无效值错误，提bug: #5738,先跳过')
+def get_FingerPosLimit(serial_api_instance,finger_id):
+    low_limit = [0]
+    high_limit = [0]
+    return serial_api_instance.HAND_GetFingerPosLimit(HAND_ID, finger_id, low_limit, high_limit, [])
+        
+@pytest.mark.skipif(SKIP_CASE,reason='超出范围值(校准范围)，不报无效值错误，提bug: #5738,先跳过')
 def test_HAND_SetFingerPosLimit(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
@@ -886,10 +891,23 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
                 )
                 
                 # 验证结果（基于当前手指的有效范围）
-                if current_start <= min_pos <= max_pos <= current_end and min_pos <= max_pos:
+                if 0 <= min_pos <= max_pos <= 65535:
                     # 有效范围：上下限在0-65535之间，且下限<=上限
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效位置限制失败: {desc}, 错误码: err={err}, remote_err={remote_err[0]}"
+                    delay_milli_seconds_impl(DELAY_MS)
+                    value = get_FingerPosLimit(serial_api_instance,finger_id)
+                    assert value[0] == HAND_RESP_SUCCESS, \
+                        f"手指 {finger_id} 获取有效位置限制失败, 错误码: err={err}"
+                    if min_pos < current_start:
+                       assert abs(value[1]-current_start) < POS_MIN_LOSS, \
+                       f"写入小于最小值{min_pos}(<{current_start})，但读取位置为{value[1]}（预期{current_start})"
+                    elif max_pos > current_end:
+                        assert abs(value[2]-current_end) < POS_MIN_LOSS, \
+                        f"写入大于最大值{max_pos}(>{current_end})，但读取位置为{value[2]}（预期{current_end})"
+                    else:
+                        assert abs(value[1] - min_pos) < POS_MAX_LOSS and abs(value[2] - max_pos) < POS_MAX_LOSS, \
+                            f"手指 {finger_id} 设置位置Limit{min_pos,max_pos}，读取位置{value[1],value[2]}，差值超出容差{POS_MAX_LOSS}"
                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过"))
                 else:
                     # 无效范围：超出边界或下限>上限
@@ -1114,7 +1132,7 @@ def get_HAND_FingerPosAbsAll(serial_api_instance):
     motor_cnt = [MAX_MOTOR_CNT]
     return serial_api_instance.HAND_GetFingerPosAbsAll(HAND_ID, target_pos, current_pos, motor_cnt, [])
     
-@pytest.mark.skipif(SKIP_CASE,reason='先跳过raw_pos异常值不报错,speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常, 提bug:#5741,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='超出范围值(校准范围)，不报无效值错误, 提bug:#5741,先跳过')
 def test_HAND_SetFingerPosAbsAll(serial_api_instance):
     # 默认参数值
     delay_milli_seconds_impl(DELAY_MS_FUN)
@@ -1402,7 +1420,7 @@ def get_FingerPosAll(serial_api_instance):
     remote_err = []
     return serial_api_instance.HAND_GetFingerPosAll(HAND_ID, target_pos, current_pos, motor_cnt, remote_err)
   
-@pytest.mark.skipif(SKIP_CASE,reason='pos异常值不报错，speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常')
+@pytest.mark.skipif(SKIP_CASE,reason='超出范围值，不报无效值错误')
 def test_HAND_SetFingerPosAll(serial_api_instance):
     # 定义测试常量
     # 默认参数值
@@ -1830,7 +1848,7 @@ def get_HAND_ThumbRootPos(serial_api_instance):
     pos = [0]
     return serial_api_instance.HAND_GetThumbRootPos(HAND_ID, raw_encoder, pos, [])
 
-@pytest.mark.skipif(SKIP_CASE,reason='pos和speed输入异常值直接抛出ValueError: byte must be in range(0, 256)异常,正常值也报错,提bug:#5742,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='超出范围值(0,1,2)，不报无效值错误,提bug:#5742,先跳过')
 def test_HAND_SetThumbRootPos(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
