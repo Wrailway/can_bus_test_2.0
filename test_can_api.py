@@ -1184,6 +1184,7 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
             if is_all_pos_valid:  # 所有手指的位置都在各自的有效范围
                 assert err == HAND_RESP_SUCCESS, \
                     f"设置有效位置失败: {desc}, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
+                delay_milli_seconds_impl(DELAY_MS)
                 value = get_HAND_FingerPosAbsAll(serial_api_instance)
                 assert value[0] == HAND_RESP_SUCCESS, \
                     f"获取有效位置失败, 错误码: err={err}"
