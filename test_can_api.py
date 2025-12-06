@@ -445,6 +445,7 @@ def test_HAND_SetID(serial_api_instance):
         logger.info("==================================")
         
 def get_HAND_PID(serial_api_instance,finger_id):
+    delay_milli_seconds_impl(DELAY_MS)
     p = [0]
     i = [0]
     d = [0]
@@ -452,6 +453,7 @@ def get_HAND_PID(serial_api_instance,finger_id):
     return serial_api_instance.HAND_GetFingerPID(HAND_ID, finger_id, p, i, d, g, [])
 
 def get_HAND_FORCE_PID(serial_api_instance,finger_id):
+    delay_milli_seconds_impl(DELAY_MS)
     p = [0]
     i = [0]
     d = [0]
@@ -463,50 +465,50 @@ def test_HAND_SetFingerPID(serial_api_instance):
     """手指PID参数设置功能测试 - 单变量控制"""
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 默认参数值
-    DEFAULT_P = 250.0
-    DEFAULT_I = 2.0
-    DEFAULT_D = 250.0
-    DEFAULT_G = 1.0
+    DEFAULT_P = 250.00
+    DEFAULT_I = 2.00
+    DEFAULT_D = 250.00
+    DEFAULT_G = 1.00
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'P': [
-            (1.0,   "P值最小值1.0"),
-            (240.0, "P值中间值240.00"),
-            (500.0, "P值最大值500.00"),
-            (0.99,    "P值边界值0.99"),
-            (0,     "P值边界值0.0"),
-            (-0.01,    "P值边界值-0.01"),
-            (500.01, "P值边界值500.01"),
-            (65535.0, "P值边界值65535.0"),
-            (65536.0, "P值边界值65536.0")
+            (1.00,   "P值最小值1.00"),
+            (240.00, "P值中间值240.00"),
+            (500.00, "P值最大值500.00"),
+            (0.90,    "P值边界值0.9"),
+            (0.00,     "P值边界值0.00"),
+            (-1.00,    "P值边界值-1.00"),
+            (501.00, "P值边界值501.00"),
+            (65535.00, "P值边界值65535.00"),
+            (65536.00, "P值边界值65536.00")
         ],
         'I': [
-            (0.0,     "I值最小值0.0"),
+            (0.00,     "I值最小值0.00"),
             (50.00,  "I值中间值50.00"),
             (100.00, "I值最大值100.00"),
-            (-0.01,    "I值边界值-0.01"),
-            (100.01, "I值边界值100.01"),
-            (65535.0, "I值边界值65535.0"),
-            (65536.0, "I值边界值65536.0")
+            (-1.00,    "I值边界值-1.00"),
+            (101.00, "I值边界值101.00"),
+            (65535.00, "I值边界值65535.00"),
+            (65536.00, "I值边界值65536.00")
         ],
         'D': [
-            (0.0,     "D值最小值0.0"),
-            (250.01, "D值中间值250.01"),
+            (0.00,     "D值最小值0.00"),
+            (240.00, "D值中间值240.00"),
             (500.00, "D值最大值500.00"),
-            (-0.01,    "D值边界值-0.01"),
-            (500.01, "D值边界值500.01"),
-            (65535.0, "D值边界值65535.0"),
-            (65536.0, "D值边界值65536.0")
+            (-1.00,    "D值边界值-1.00"),
+            (501.00, "D值边界值501.00"),
+            (65535.00, "D值边界值65535.00"),
+            (65536.00, "D值边界值65536.00")
         ],
         'G': [
             (0.01,     "G值最小值0.01"),
             (0.50,    "G值中间值0.50"),
             (1.00,   "G值最大值1.00"),
-            (0,     "G值边界值0.0"),
-            (-0.01,    "G值边界值-0.01"),
-            (1.01,   "G值边界值1.01"),
-            (65535.0, "G值边界值65535.0"),
-            (65536.0, "G值边界值65536.0")
+            (0.00,     "G值边界值0.00"),
+            (-1.00,    "G值边界值-1.00"),
+            (1.05,   "G值边界值1.05"),
+            (65535.00, "G值边界值65535.00"),
+            (65536.00, "G值边界值65536.00")
         ]
     }
     
@@ -533,7 +535,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
                 )
                 
                 # 验证结果
-                if 1.0 <= p_value <= 500.00:  # 有效P值范围
+                if 1.00 <= p_value <= 500.00:  # 有效P值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效P值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
                         
@@ -563,7 +565,7 @@ def test_HAND_SetFingerPID(serial_api_instance):
                     remote_err
                 )
                 # 验证结果
-                if 0.0 <= i_value <= 100.00:  # 有效I值范围
+                if 0.00 <= i_value <= 100.00:  # 有效I值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效I值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
                     delay_milli_seconds_impl(DELAY_MS)
@@ -831,6 +833,7 @@ def test_HAND_SetFingerForceTarget(serial_api_instance):
         logger.info("=======================")
 
 def get_FingerPosLimit(serial_api_instance,finger_id):
+    delay_milli_seconds_impl(DELAY_MS*2)
     low_limit = [0]
     high_limit = [0]
     return serial_api_instance.HAND_GetFingerPosLimit(HAND_ID, finger_id, low_limit, high_limit, [])
@@ -967,6 +970,7 @@ def test_HAND_FingerStop(serial_api_instance):
     logger.info(f'设置停止移动手指成功')
     
 def get_FingerPosAbs(serial_api_instance,finger_id):
+    delay_milli_seconds_impl(DELAY_MS*2)
     target_pos = [0]
     current_pos = [0]
     return serial_api_instance.HAND_GetFingerPosAbs(HAND_ID, finger_id, target_pos, current_pos, [])
@@ -983,7 +987,7 @@ def test_HAND_SetFingerPosAbs(serial_api_instance):
     thumb_root_pos = [0] * MAX_THUMB_ROOT_POS
     thumb_root_pos_cnt = [3]  # 初始请求3个拇指根位置数据
     # 获取每个手指的校准数据（列表类型，索引对应finger_id）
-    delay_milli_seconds_impl(DELAY_MS_FUN)
+    delay_milli_seconds_impl(DELAY_MS)
     err, end_pos_get, start_pos_get, thumb_root_pos_get = serial_api_instance.HAND_GetCaliData(
         HAND_ID, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, []
     )
@@ -1127,6 +1131,7 @@ def test_HAND_SetFingerPosAbs(serial_api_instance):
     return test_results  # 返回测试结果，便于上层统计
 
 def get_HAND_FingerPosAbsAll(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS*2)
     target_pos = [0] * MAX_MOTOR_CNT
     current_pos = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
@@ -1283,6 +1288,7 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
         logger.info("=======================")
 
 def get_HAND_FingerPos(serial_api_instance,finger_id):
+    delay_milli_seconds_impl(DELAY_MS*2)
     target_pos = [0]
     current_pos = [0]
     return serial_api_instance.HAND_GetFingerPos(HAND_ID, finger_id, target_pos, current_pos, [])
@@ -1336,7 +1342,7 @@ def test_HAND_SetFingerPos(serial_api_instance):
                 if 0 <= pos <= 65535:  # 有效位置范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效位置失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                    delay_milli_seconds_impl(DELAY_MS)
+                    # delay_milli_seconds_impl(DELAY_MS)
                     value = get_HAND_FingerPos(serial_api_instance,finger_id)
                     assert value[0] == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 获取有效位置失败: {desc}, 错误码: err={err}"
@@ -1414,6 +1420,7 @@ def test_HAND_SetFingerPos(serial_api_instance):
         logger.info("=======================")
         
 def get_FingerPosAll(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS*2)
     target_pos = [0] * MAX_MOTOR_CNT
     current_pos = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
@@ -1476,7 +1483,7 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
             if is_all_pos_valid:  # 有效位置范围
                 assert err == HAND_RESP_SUCCESS, \
                     f"设置有效位置失败: {desc}, 错误码:err={err},remote_err={remote_err[0]}"
-                delay_milli_seconds_impl(DELAY_MS)
+                # delay_milli_seconds_impl(DELAY_MS)
                 # 批量位置设置后的校验逻辑
                 value = get_FingerPosAll(serial_api_instance)
                 # 1. 校验获取位置接口调用成功
@@ -1570,7 +1577,7 @@ def get_angle_range(serial_api_instance, finger_id=0):
     :param finger_id: 要测试的手指ID（0~5）
     :return: 指定手指的实际最小值, 指定手指的实际最大值
     """
-    delay_milli_seconds_impl(DELAY_MS_FUN)
+    delay_milli_seconds_impl(DELAY_MS*2)
     # 核心常量定义
     SPEED = 100
     ANGLE_MIN_THEORY = -32768  # 理论最小值
@@ -1596,12 +1603,14 @@ def get_angle_range(serial_api_instance, finger_id=0):
         finger_min_val = current_angle_min[0]
 
         # 3. 设置指定手指到理论最大值，读取实际生效的最大值
+        delay_milli_seconds_impl(DELAY_MS)
         set_max_err = serial_api_instance.HAND_SetFingerAngle(HAND_ID, finger_id, ANGLE_MAX_THEORY, SPEED, [])
         assert set_max_err == HAND_RESP_SUCCESS, f"设置手指{finger_id}最大值失败，错误码：{set_max_err}"
         delay_milli_seconds_impl(DELAY_MS)
 
         target_angle_max = [0]
         current_angle_max = [0]
+        delay_milli_seconds_impl(DELAY_MS)
         read_max_result = serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle_max, current_angle_max, [])
         read_max_err = read_max_result[0]
         assert read_max_err == HAND_RESP_SUCCESS, f"读取手指{finger_id}最大值失败，错误码：{read_max_err}"
@@ -1611,6 +1620,7 @@ def get_angle_range(serial_api_instance, finger_id=0):
         assert finger_min_val <= finger_max_val, f"手指{finger_id}极值异常：最小{finger_min_val} > 最大{finger_max_val}"
         
         # 5. 测试完成后恢复（按规则：第六指恢复最小值，其他恢复最大值）
+        delay_milli_seconds_impl(DELAY_MS)
         recover_angle = finger_min_val if finger_id == 5 else finger_max_val
         recover_err = serial_api_instance.HAND_SetFingerAngle(HAND_ID, finger_id, recover_angle, SPEED, [])
         assert recover_err == HAND_RESP_SUCCESS, f"恢复手指{finger_id}失败，错误码：{recover_err}"
@@ -1644,15 +1654,12 @@ def test_HAND_SetFingerAngle(serial_api_instance):
             finger_min = actual_angle_min[finger_id]
             finger_max = actual_angle_max[finger_id]
             finger_mid = (finger_min + finger_max) // 2  # 计算当前手指的中间值
-            # 按顺序添加：0、最小值、中间值、最大值、32767、32768、65535
             angle_test_cases.extend([
                 (-32768, f"手指{finger_id}-理论最小值-32768"),
                 (finger_min, f"手指{finger_id}-实际最小值"),
                 (finger_mid, f"手指{finger_id}-实际中间值({finger_mid})"),
                 (finger_max, f"手指{finger_id}-实际最大值"),
                 (32767, f"手指{finger_id}-理论最大值32767"),
-                # (32768, f"手指{finger_id}-超理论最大值32768"),
-                # (65535, f"手指{finger_id}-超大值65535")
             ])
 
     test_results = []
@@ -1714,7 +1721,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
         for case, res in test_results:
             logger.info(f"{case}: {res}")
 
-@pytest.mark.skipif(SKIP_CASE,reason='debugzhong,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')
 def test_HAND_SetFingerAngleAll(serial_api_instance):
     """批量设置所有手指角度测试（严格遵循分组默认值规则）"""
     delay_milli_seconds_impl(DELAY_MS_FUN)
@@ -1731,6 +1738,7 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
         # 读取并记录当前手指的初始值（用于后续恢复）
         target_angle = [0]
         current_angle = [0]
+        delay_milli_seconds_impl(DELAY_MS)
         read_res = serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle, current_angle, [])
         finger_init_vals.append(read_res[2])
     logger.info(f'actual_angle_min = {actual_angle_min}')
@@ -1783,6 +1791,7 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
                 remote_err = []
 
                 # 执行批量设置
+                delay_milli_seconds_impl(DELAY_MS)
                 logger.info(f"angle_array = {angle_array}")
                 set_err = serial_api_instance.HAND_SetFingerAngleAll(
                     HAND_ID, angle_array, speed_array, MAX_MOTOR_CNT, remote_err
@@ -1853,7 +1862,7 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
     # 默认参数值
-    DEFAULT_POS = 0     # 位置默认值（合法值：0, 1, 2）
+    DEFAULT_POS = 1     # 位置默认值（合法值：0, 1, 2）
     DEFAULT_SPEED = 100   # 速度默认值（范围：0-255）
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
@@ -1964,7 +1973,7 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
 @pytest.mark.skipif(SKIP_CASE,reason='置多个手指的正常值，报无效值错误，提bug：#5723，先跳过')
 def test_HAND_SetFingerForcePID(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
-    # 默认参数值（与test_HAND_SetFingerPID保持一致）
+        # 默认参数值
     DEFAULT_P = 250.00
     DEFAULT_I = 2.00
     DEFAULT_D = 250.00
@@ -1972,43 +1981,43 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'P': [
-            (1.0,   "P值最小值1.0"),
+            (1.00,   "P值最小值1.00"),
             (240.00, "P值中间值240.00"),
             (500.00, "P值最大值500.00"),
-            (0.99,    "P值边界值0.99"),
-            (0.0,     "P值边界值0.0"),
-            (-0.01,    "P值边界值-0.01"),
-            (500.01, "P值边界值500.01"),
-            (65535.0, "P值边界值65535.0"),
-            (65536.0, "P值边界值65536.0")
+            (0.90,    "P值边界值0.9"),
+            (0.00,     "P值边界值0.00"),
+            (-1.00,    "P值边界值-1.00"),
+            (501.00, "P值边界值501.00"),
+            (65535.00, "P值边界值65535.00"),
+            (65536.00, "P值边界值65536.00")
         ],
         'I': [
-            (0.0,     "I值最小值0.0"),
+            (0.00,     "I值最小值0.00"),
             (50.00,  "I值中间值50.00"),
             (100.00, "I值最大值100.00"),
-            (-0.01,    "I值边界值-0.01"),
-            (100.01, "I值边界值100.01"),
-            (65535.0, "I值边界值65535.0"),
-            (65536.0, "I值边界值65536.0")
+            (-1.00,    "I值边界值-1.00"),
+            (101.00, "I值边界值101.00"),
+            (65535.00, "I值边界值65535.00"),
+            (65536.00, "I值边界值65536.00")
         ],
         'D': [
-            (0.0,     "D值最小值0.0"),
-            (250.01, "D值中间值250.01"),
+            (0.00,     "D值最小值0.00"),
+            (240.00, "D值中间值240.00"),
             (500.00, "D值最大值500.00"),
-            (-0.01,    "D值边界值-0.01"),
-            (500.01, "D值边界值500.01"),
-            (65535.0, "D值边界值65535.0"),
-            (65536.0, "D值边界值65536.0")
+            (-1.00,    "D值边界值-1.00"),
+            (501.00, "D值边界值501.00"),
+            (65535.00, "D值边界值65535.00"),
+            (65536.00, "D值边界值65536.00")
         ],
         'G': [
             (0.01,     "G值最小值0.01"),
-            (0.5,    "G值中间值0.5"),
-            (1.0,   "G值最大值1.0"),
-            (0.0,     "G值边界值0.0"),
-            (-0.01,    "G值边界值-0.01"),
-            (1.01,   "G值边界值1.01"),
-            (65535.0, "G值边界值65535.0"),
-            (65536.0, "G值边界值65536.0")
+            (0.50,    "G值中间值0.50"),
+            (1.00,   "G值最大值1.00"),
+            (0.00,     "G值边界值0.00"),
+            (-1.00,    "G值边界值-1.00"),
+            (1.05,   "G值边界值1.05"),
+            (65535.00, "G值边界值65535.00"),
+            (65536.00, "G值边界值65536.00")
         ]
     }
     
@@ -2035,7 +2044,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
                 )
                 
                 # 验证结果
-                if 1.0 <= p_value <= 500.00:  # 有效P值范围
+                if 1.00 <= p_value <= 500.00:  # 有效P值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效P值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
                     delay_milli_seconds_impl(DELAY_MS)
@@ -2065,7 +2074,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
                 )
                 
                 # 验证结果
-                if 0 <= i_value <= 100.00:  # 有效I值范围
+                if 0.00 <= i_value <= 100.00:  # 有效I值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效I值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
                     delay_milli_seconds_impl(DELAY_MS)
@@ -2095,7 +2104,7 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
                 )
                 
                 # 验证结果
-                if 0 <= d_value <= 500.00:  # 有效D值范围
+                if 0.00 <= d_value <= 500.00:  # 有效D值范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效D值失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
                     delay_milli_seconds_impl(DELAY_MS)
@@ -2204,12 +2213,14 @@ def test_HAND_SetSelfTestLevel(serial_api_instance):
     )
     logger.info("成功设置半自检")
     
+    delay_milli_seconds_impl(DELAY_MS*2)
     # 测试设置为完整自检（恢复默认状态）
     remote_err = []
     err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, SELF_TEST_LEVEL['完整自检'], remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置完整自检失败，错误码: err={err},remote_err={remote_err[0]}"
     delay_milli_seconds_impl(DELAY_MS*2) # 等待自检执行
     
+    delay_milli_seconds_impl(DELAY_MS*2)
     err,_ = serial_api_instance.HAND_GetSelfTestLevel(HAND_ID, current_level, [])
     assert err == HAND_RESP_SUCCESS, f"获取自检级别失败，错误码:err={err}"
     
@@ -2219,6 +2230,7 @@ def test_HAND_SetSelfTestLevel(serial_api_instance):
     )
     logger.info("成功设置完整自检")
     
+    delay_milli_seconds_impl(DELAY_MS*2)
     # 确保测试结束后恢复默认状态
     remote_err = [0]
     err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, SELF_TEST_LEVEL['完整自检'], remote_err)
@@ -2249,6 +2261,7 @@ def test_HAND_SetBeepSwitch(serial_api_instance):
     )
     logger.info("蜂鸣器已成功关闭")
     
+    delay_milli_seconds_impl(DELAY_MS)
     # 测试开启蜂鸣器
     err = serial_api_instance.HAND_SetBeepSwitch(HAND_ID, BEEP_STATUS['ON'], [])
     assert err == HAND_RESP_SUCCESS, f"设置蜂鸣器开启失败，错误码: err={err}"
@@ -2264,6 +2277,7 @@ def test_HAND_SetBeepSwitch(serial_api_instance):
     )
     logger.info("蜂鸣器已成功开启")
     
+    delay_milli_seconds_impl(DELAY_MS)
     # 恢复默认状态
     err = serial_api_instance.HAND_SetBeepSwitch(HAND_ID, BEEP_STATUS['ON'], [])
     if err != HAND_RESP_SUCCESS:
@@ -2396,3 +2410,11 @@ def test_HAND_StartInit(serial_api_instance):
     err = serial_api_instance.HAND_StartInit(HAND_ID, remote_err)
     assert err == HAND_RESP_SUCCESS,f"初始化手失败，错误码: 错误码:err={err},remote_err={remote_err[0]}"
     logger.info(f'手初始化成功')
+    delay_milli_seconds_impl(DELAY_MS_FUN*2)
+    
+    logger.info(f'恢复默认自检级别')
+    remote_err = [0]
+    err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, 2, remote_err)
+    if err != HAND_RESP_SUCCESS:
+        logger.error(f"恢复默认自检级别失败，错误码: err={err},remote_err={remote_err[0]}")
+    
