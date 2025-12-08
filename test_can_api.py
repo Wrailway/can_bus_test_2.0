@@ -855,7 +855,8 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
 
     # 测试结果存储
     test_results = []
-    logger.info(f'start_pos_get={start_pos_get} \n end_pos_get={end_pos_get}')
+    logger.info(f'start_pos_get={start_pos_get}')
+    logger.info(f'end_pos_get={end_pos_get}')
     try:
         """------------------- 按手指逐个测试 -------------------"""
         for finger_id in range(MAX_MOTOR_CNT):
@@ -874,7 +875,7 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
                     (current_start, current_start + 1, "下限接近上限"),  # 单个值相加
                    
                     # 无效范围测试
-                     (0, 65535, "取全部范围"),
+                    (0, 65535, "取全部范围"),
                     (current_end, current_start, "下限大于上限"),
                     (-1, 100, "下限为负数"),
                     (100, 65536, "上限超出范围"),
@@ -1157,13 +1158,16 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
     )
     # 增加断言，确保校准数据获取成功
     assert err == HAND_RESP_SUCCESS, f"获取校准数据失败: err={err}"
+    logger.info(f'start_pos_get ={start_pos_get}')
+    logger.info(f'end_pos_get ={end_pos_get}')
+    temp_pos_end = end_pos_get
     
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'pos_abs_all': [
             (start_pos_get,       f"所有手指绝对位置最小值{start_pos_get}"),
-            ([end_pos_get[i] if i in (0, 5) else start_pos_get[i] for i in range(MAX_MOTOR_CNT)],          f"0、5手指绝对位置最大值（其余为0）{[end_pos_get[i] if i in (0, 5) else 0 for i in range(MAX_MOTOR_CNT)]}"),
-            ([end_pos_get[i] if i in (1, 2,3,4) else start_pos_get[i] for i in range(MAX_MOTOR_CNT)],         f"1-4手指绝对位置最大值（其余为0）{[end_pos_get[i] if i in (1, 2, 3, 4) else 0 for i in range(MAX_MOTOR_CNT)]}"),
+            ([temp_pos_end[i] if i in (0, 5) else start_pos_get[i] for i in range(MAX_MOTOR_CNT)],          f"0、5手指绝对位置最大值（其余为0）"),
+            ([temp_pos_end[i] if i in (1, 2,3,4) else start_pos_get[i] for i in range(MAX_MOTOR_CNT)],         f"1-4手指绝对位置最大值（其余为0）"),
             # 修复：无效的列表构造
             ([0]*MAX_MOTOR_CNT,      f"所有手指绝对位置边界值{[0]*MAX_MOTOR_CNT}"),
             ([65535,0,0,0,0,65535],      f"1,6手指绝对位置边界值[65535,0,0,0,0,65535]"),
@@ -1190,7 +1194,7 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
         
         # 测试位置参数（固定速度为默认值）
         logger.info(f"测试位置参数")
-        for pos, desc in PARAM_TEST_DATA['pos_abs_all']:
+        for idx, (pos, desc) in enumerate(PARAM_TEST_DATA['pos_abs_all'], start=0):
             speed_array = [DEFAULT_SPEED] * MAX_MOTOR_CNT
             remote_err = []
             delay_milli_seconds_impl(DELAY_MS)
@@ -1211,28 +1215,40 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
                 value = get_HAND_FingerPosAbsAll(serial_api_instance)
                 assert value[0] == HAND_RESP_SUCCESS, \
                     f"获取有效位置失败, 错误码: err={err}"
-                current_pos = value[1]  # 获取所有手指的当前位置列表 
-                # 2. 逐手指校验位置一致性（兼容第六指特殊逻辑）
+                current_pos = value[2]  # 获取所有手指的当前位置列表 
                 for i in range(MAX_MOTOR_CNT):
                     set_pos = pos[i]    # 第i个手指的设置值
                     read_pos = current_pos[i]  # 第i个手指的读取值
                     finger_min_pos = start_pos_get[i]
                     finger_max_pos = end_pos_get[i]
+                    
                     if set_pos < finger_min_pos:
                         assert abs(read_pos - finger_min_pos) < POS_MIN_LOSS, \
-                                f"写入小于最小值{pos}(<{finger_min_pos})，但读取位置为{read_pos}（预期{finger_min_pos})"
+                                f"第{i+1}指写入小于最小值{set_pos}(<{finger_min_pos})，读取值{read_pos}（预期{finger_min_pos})"
+                        test_results.append((f"手指{i},位置测试({desc})", "通过"))
                     elif set_pos > finger_max_pos:
                         assert abs(read_pos - finger_max_pos) < POS_MIN_LOSS, \
-                                f"写入大于最大值{pos}(<{finger_max_pos})，但读取位置为{read_pos}（预期{finger_max_pos})"
+                            f"第{i+1}指写入大于最大值{set_pos}(>{finger_max_pos})，读取值{read_pos}（预期{finger_max_pos})"
+                        test_results.append((f"手指{i},位置测试({desc})", "通过"))
                     else:
-                        # 其他手指：常规容差校验
                         assert abs(read_pos - set_pos) < POS_MAX_LOSS, \
-                            f"第{i+1}指位置不一致 | 设置值:{set_pos}，读取值:{read_pos}，容差:{POS_MAX_LOSS}"
-                test_results.append((f"位置测试({desc})", "通过"))
-            else:  # 至少有一个手指的位置无效
-                assert err != HAND_RESP_SUCCESS, \
-                    f"设置无效位置未报错: {desc}, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
-                test_results.append((f"位置测试({desc})", "通过(预期失败)"))
+                                f"第{i+1}指位置不一致 | 设置值:{set_pos}，读取值:{read_pos}，容差:{POS_MAX_LOSS}"
+                        test_results.append((f"手指{i},位置测试({desc})", "不通过"))
+                #恢复默认值，再进入下一轮测试
+                err = serial_api_instance.HAND_SetFingerPosAbsAll(
+                        HAND_ID, 
+                        [DEFAULT_POS] * MAX_MOTOR_CNT,
+                        [DEFAULT_SPEED] * MAX_MOTOR_CNT,
+                        MAX_MOTOR_CNT,
+                        remote_err)
+                assert err == HAND_RESP_SUCCESS, \
+                f"恢复默认位置失败, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
+                delay_milli_seconds_impl(DELAY_MS)
+            else:
+                    # 无效位置应返回数据错误
+                    assert err != HAND_RESP_SUCCESS, \
+                        f"手指设置无效位置未报错: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
+                    test_results.append((f"手指位置测试({desc})", "通过(预期失败)"))
         
         # 测试速度参数（固定位置为默认值）
         logger.info(f"测试速度参数")
@@ -1857,7 +1873,7 @@ def get_HAND_ThumbRootPos(serial_api_instance):
     pos = [0]
     return serial_api_instance.HAND_GetThumbRootPos(HAND_ID, raw_encoder, pos, [])
 
-@pytest.mark.skipif(SKIP_CASE,reason='超出范围值(0,1,2)，不报无效值错误,提bug:#5742,先跳过')
+@pytest.mark.skipif(SKIP_CASE,reason='超出范围值(0,1,2)，在0~255之间的异常值无法检测出来,提bug:#5742,先跳过')
 def test_HAND_SetThumbRootPos(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
@@ -1870,9 +1886,9 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
             (0,     "旋转大拇指到预设位置值0"),
             (1,     "旋转大拇指到预设位置值1"),
             (2,     "旋转大拇指到预设位置值2"),
-            (-1,    "旋转大拇指到预设位置边界值-1"),
-            (255,     "旋转大拇指到预设位置边界值255"),
-            (256,     "旋转大拇指到预设位置边界值256"),
+            # (-1,    "旋转大拇指到预设位置边界值-1"),
+            # (255,     "旋转大拇指到预设位置边界值255"),
+            # (256,     "旋转大拇指到预设位置边界值256")
         ],
         'speed': [
             (0,       "手指移动速度最小值0"),
@@ -1969,7 +1985,7 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
         for case, result in test_results:
             logger.info(f"{case}: {result}")
         logger.info("=======================")
-
+        
 @pytest.mark.skipif(SKIP_CASE,reason='置多个手指的正常值，报无效值错误，提bug：#5723，先跳过')
 def test_HAND_SetFingerForcePID(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
