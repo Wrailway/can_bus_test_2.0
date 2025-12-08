@@ -838,7 +838,7 @@ def get_FingerPosLimit(serial_api_instance,finger_id):
     high_limit = [0]
     return serial_api_instance.HAND_GetFingerPosLimit(HAND_ID, finger_id, low_limit, high_limit, [])
         
-@pytest.mark.skipif(SKIP_CASE,reason='超出范围值(校准范围)，不报无效值错误，提bug: #5738,先跳过')
+@pytest.mark.skipif(False,reason='超出范围值(校准范围)，不报无效值错误，提bug: #5738,先跳过')
 def test_HAND_SetFingerPosLimit(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
@@ -895,7 +895,7 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
                 )
                 
                 # 验证结果（基于当前手指的有效范围）
-                if 0 <= min_pos <= max_pos <= 65535:
+                if current_start <= min_pos <= max_pos <= current_end:
                     # 有效范围：上下限在0-65535之间，且下限<=上限
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效位置限制失败: {desc}, 错误码: err={err}, remote_err={remote_err[0]}"
@@ -903,14 +903,14 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
                     value = get_FingerPosLimit(serial_api_instance,finger_id)
                     assert value[0] == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 获取有效位置限制失败, 错误码: err={err}"
-                    if min_pos < current_start:
-                       assert abs(value[1]-current_start) < POS_MIN_LOSS, \
-                       f"写入小于最小值{min_pos}(<{current_start})，但读取位置为{value[1]}（预期{current_start})"
-                    elif max_pos > current_end:
-                        assert abs(value[2]-current_end) < POS_MIN_LOSS, \
-                        f"写入大于最大值{max_pos}(>{current_end})，但读取位置为{value[2]}（预期{current_end})"
-                    else:
-                        assert abs(value[1] - min_pos) < POS_MAX_LOSS and abs(value[2] - max_pos) < POS_MAX_LOSS, \
+                    # if min_pos < current_start:
+                    #    assert abs(value[1]-current_start) < POS_MIN_LOSS, \
+                    #    f"写入小于最小值{min_pos}(<{current_start})，但读取位置为{value[1]}（预期{current_start})"
+                    # elif max_pos > current_end:
+                    #     assert abs(value[2]-current_end) < POS_MIN_LOSS, \
+                    #     f"写入大于最大值{max_pos}(>{current_end})，但读取位置为{value[2]}（预期{current_end})"
+                    # else:
+                    assert abs(value[1] - min_pos) < POS_MAX_LOSS and abs(value[2] - max_pos) < POS_MAX_LOSS, \
                             f"手指 {finger_id} 设置位置Limit{min_pos,max_pos}，读取位置{value[1],value[2]}，差值超出容差{POS_MAX_LOSS}"
                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过"))
                 else:
@@ -918,7 +918,16 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
                     assert err != HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置无效位置限制未报错: {desc}, 错误码: err={err}, remote_err={remote_err}"
                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过(预期失败)"))
-            
+            logger.info(f"先恢复默认数据，再测试下一个手指")
+            delay_milli_seconds_impl(DELAY_MS)
+            err = serial_api_instance.HAND_SetFingerPosLimit(
+                HAND_ID, finger_id, 
+                start_pos_get[finger_id],  # 单个手指的起始位置
+                end_pos_get[finger_id],    # 单个手指的结束位置
+                remote_err
+            )
+            assert err == HAND_RESP_SUCCESS, \
+                f"恢复手指 {finger_id} 默认位置恢复失败, 错误码: err={err}, remote_err={remote_err[0]}"
             logger.info(f"手指 {finger_id} 位置限制测试完成")
         
         """------------------- 恢复默认值 -------------------"""
