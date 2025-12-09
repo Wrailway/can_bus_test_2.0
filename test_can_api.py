@@ -918,16 +918,6 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
                     assert err != HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置无效位置限制未报错: {desc}, 错误码: err={err}, remote_err={remote_err}"
                     test_results.append((f"手指{finger_id} 位置限制测试({desc})", "通过(预期失败)"))
-            logger.info(f"先恢复默认数据，再测试下一个手指")
-            delay_milli_seconds_impl(DELAY_MS)
-            err = serial_api_instance.HAND_SetFingerPosLimit(
-                HAND_ID, finger_id, 
-                start_pos_get[finger_id],  # 单个手指的起始位置
-                end_pos_get[finger_id],    # 单个手指的结束位置
-                remote_err
-            )
-            assert err == HAND_RESP_SUCCESS, \
-                f"恢复手指 {finger_id} 默认位置恢复失败, 错误码: err={err}, remote_err={remote_err[0]}"
             logger.info(f"手指 {finger_id} 位置限制测试完成")
         
         """------------------- 恢复默认值 -------------------"""
