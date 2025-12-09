@@ -1514,7 +1514,7 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
                 # 1. 校验获取位置接口调用成功
                 assert value[0] == HAND_RESP_SUCCESS, \
                     f"批量获取所有手指位置失败 | 错误码: err={value[0]}"  # 修正：错误码取value[0]而非err
-                current_pos = value[1]  # 获取所有手指的当前位置列表
+                current_pos = value[2]  # 获取所有手指的当前位置列表
 
                 # 2. 逐手指校验位置一致性（兼容第六指特殊逻辑）
                 for i in range(MAX_MOTOR_CNT):
