@@ -75,7 +75,7 @@ HAND_CMD_GET_UID = 0x23  # Get 96 bits UID
 HAND_CMD_GET_BATTERY_VOLTAGE = 0x24  # Get battery voltage
 HAND_CMD_GET_USAGE_STAT = 0x25  # Get usage stat
 HAND_CMD_GET_SPEED_CTRL_PARAMS = 0x3D  # Get speed control parameters
-HAND_CMD_GET_MANUFACTURE_DATA = 0x3E    # Get manufacture data
+HAND_CMD_GET_MANUFACTURE_DATA = 0x3E  # Get manufacture data
 
 # Chief SET commands
 HAND_CMD_RESET = 0x40  # Please don't modify
@@ -108,11 +108,41 @@ HAND_CMD_SET_BEEP_SWITCH = 0x61  # Set beep ON/OFF
 HAND_CMD_BEEP = 0x62  # Beep for duration if beep switch is on
 HAND_CMD_SET_BUTTON_PRESSED_CNT = 0x63  # Set button press count, for ROH calibration only
 HAND_CMD_START_INIT = 0x64  # Start init in case of SELF_TEST_LEVEL=0
-HAND_CMD_SET_MANUFACTURE_DATA  = 0x65  # Set manufacture data
-HAND_CMD_SET_SPEED_CTRL_PARAMS = 0x66 # Set speed control parameters
+HAND_CMD_SET_MANUFACTURE_DATA = 0x65  # Set manufacture data
+HAND_CMD_SET_SPEED_CTRL_PARAMS = 0x66  # Set speed control parameters
 CMD_ERROR_MASK = 1 << 7  # bit mask for command error
 
 MAX_PROTOCOL_DATA_SIZE = 64
+
+# Data type
+UINT8_T = 0
+INT8_T = 1
+UINT16_T = 2
+INT16_T = 3
+
+
+def match_data_type(data, type):
+    if type == UINT8_T:
+        return 0x00 <= data <= 0xFF
+    elif type == INT8_T:
+        return -0x80 <= data <= 0x7F
+    elif type == UINT16_T:
+        return 0x0000 <= data <= 0xFFFF
+    elif type == INT16_T:
+        return -0x8000 <= data <= 0x7FFF
+    else:
+        # print("Unsupported data type: ", type)
+        return False
+
+
+def match_list_type(data, type):
+    if isinstance(data, list):
+        for item in data:
+            if not match_data_type(item, type):
+                return False
+        return True
+    else:
+        return False
 
 
 class OHandSerialAPI:
@@ -349,6 +379,9 @@ class OHandSerialAPI:
         return err, end_pos, start_pos, thumb_root_pos
 
     def HAND_GetFingerPID(self, hand_id, finger_id, p, i, d, g, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(1 + 4 + 4 + 4 + 4)  # Assuming float is 4 bytes
@@ -366,6 +399,9 @@ class OHandSerialAPI:
         return err, p[0][0], i[0][0], d[0][0], g[0][0]
 
     def HAND_GetFingerCurrentLimit(self, hand_id, finger_id, current_limit, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(3)
@@ -380,6 +416,9 @@ class OHandSerialAPI:
         return err, current_limit[0]
 
     def HAND_GetFingerCurrent(self, hand_id, finger_id, current, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(3)
@@ -394,6 +433,9 @@ class OHandSerialAPI:
         return err, current[0]
 
     def HAND_GetFingerForceTarget(self, hand_id, finger_id, force_target, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(3)
@@ -408,6 +450,9 @@ class OHandSerialAPI:
         return err, force_target[0]
 
     def HAND_GetFingerForce(self, hand_id, finger_id, force_entry_cnt, force, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(1 + MAX_FORCE_ENTRIES * 2)  # Assuming each entry is 2 bytes
@@ -426,6 +471,9 @@ class OHandSerialAPI:
         return err, force
 
     def HAND_GetFingerPosLimit(self, hand_id, finger_id, low_limit, high_limit, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(5)
@@ -441,6 +489,9 @@ class OHandSerialAPI:
         return err, low_limit[0], high_limit[0]
 
     def HAND_GetFingerPosAbs(self, hand_id, finger_id, target_pos, current_pos, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(5)
@@ -458,6 +509,9 @@ class OHandSerialAPI:
         return err, target_pos[0], current_pos[0]
 
     def HAND_GetFingerPos(self, hand_id, finger_id, target_pos, current_pos, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(5)
@@ -475,6 +529,9 @@ class OHandSerialAPI:
         return err, target_pos[0], current_pos[0]
 
     def HAND_GetFingerAngle(self, hand_id, finger_id, target_angle, current_angle, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(5)
@@ -562,6 +619,9 @@ class OHandSerialAPI:
         return err, target_angle, current_angle
 
     def HAND_GetFingerStopParams(self, hand_id, finger_id, speed, stop_current, stop_after_period, retry_interval, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(9)  # Assuming 4 bytes of stop params
@@ -578,6 +638,9 @@ class OHandSerialAPI:
         return err, speed[0], stop_current[0], stop_after_period[0], retry_interval[0]
 
     def HAND_GetFingerForcePID(self, hand_id, finger_id, p, i, d, g, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id
         out = bytearray(1 + 4 + 4 + 4 + 4)  # Assuming float is 4 bytes
@@ -697,6 +760,9 @@ class OHandSerialAPI:
         return err, brake_distance[0], accel_distance[0], speed_ratio[0][0]
 
     def HAND_Reset(self, hand_id, mode, remote_err):
+        if not match_data_type(mode, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = mode
         err = self.HAND_SendCmd(hand_id, HAND_CMD_RESET, data, len(data))
@@ -711,6 +777,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetID(self, hand_id, new_id, remote_err):
+        if not match_data_type(new_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = new_id
         err = self.HAND_SendCmd(hand_id, HAND_CMD_SET_NODE_ID, data, len(data))
@@ -728,6 +797,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetCaliData(self, hand_id, end_pos, start_pos, motor_cnt, thumb_root_pos, thumb_root_pos_cnt, remote_err):
+        if not match_data_type(motor_cnt, UINT8_T) or not match_data_type(thumb_root_pos_cnt, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1 + 2 * MAX_MOTOR_CNT + 2 * MAX_MOTOR_CNT + 1 + 2 * MAX_THUMB_ROOT_POS)
         p_data = 0
         data[p_data] = motor_cnt
@@ -757,6 +829,18 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerPID(self, hand_id, finger_id, p, i, d, g, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+        
+        if not (1.0 <= p <= 500.0):
+            return HAND_RESP_DATA_INVALID
+        if not (0.0 <= i <= 100.0):
+            return HAND_RESP_DATA_INVALID
+        if not (0.0 <= d <= 500.0):
+            return HAND_RESP_DATA_INVALID
+        if not (0.01 <= g <= 1.0):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1 + 4 + 4 + 4 + 4)
         data[0] = finger_id
         data[1:5] =   struct.pack('f', p)
@@ -770,6 +854,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerCurrentLimit(self, hand_id, finger_id, current_limit, remote_err):
+        if not match_data_type(finger_id, UINT8_T) or not match_data_type(current_limit, UINT16_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(3)
         data[0] = finger_id
         data[1] = current_limit & 0xFF
@@ -781,6 +868,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerForceTarget(self, hand_id, finger_id, force_limit, remote_err):
+        if not match_data_type(finger_id, UINT8_T) or not match_data_type(force_limit, UINT16_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(3)
         data[0] = finger_id
         data[1] = force_limit & 0xFF
@@ -792,6 +882,13 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerPosLimit(self, hand_id, finger_id, pos_limit_low, pos_limit_high, remote_err):
+        if (
+            not match_data_type(finger_id, UINT8_T)
+            or not match_data_type(pos_limit_low, UINT16_T)
+            or not match_data_type(pos_limit_high, UINT16_T)
+        ):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(5)
         data[0] = finger_id
         data[1] = pos_limit_low & 0xFF
@@ -805,6 +902,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_FingerStart(self, hand_id, finger_id_bits, remote_err):
+        if not match_data_type(finger_id_bits, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id_bits
 
@@ -814,6 +914,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_FingerStop(self, hand_id, finger_id_bits, remote_err):
+        if not match_data_type(finger_id_bits, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(1)
         data[0] = finger_id_bits
 
@@ -823,6 +926,13 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerPosAbs(self, hand_id, finger_id, raw_pos, speed, remote_err):
+        if (
+            not match_data_type(finger_id, UINT8_T)
+            or not match_data_type(raw_pos, UINT16_T)
+            or not match_data_type(speed, UINT8_T)
+        ):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(4)
         data[0] = finger_id
         data[1] = raw_pos & 0xFF
@@ -835,6 +945,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerPos(self, hand_id, finger_id, pos, speed, remote_err):
+        if not match_data_type(finger_id, UINT8_T) or not match_data_type(pos, UINT16_T) or not match_data_type(speed, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(4)
         data[0] = finger_id
         data[1] = pos & 0xFF
@@ -847,6 +960,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerAngle(self, hand_id, finger_id, angle, speed, remote_err):
+        if not match_data_type(finger_id, UINT8_T) or not match_data_type(angle, INT16_T) or not match_data_type(speed, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(4)
         data[0] = finger_id
         data[1] = angle & 0xFF
@@ -859,6 +975,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetThumbRootPos(self, hand_id, pos, speed, remote_err):
+        if not match_data_type(pos, UINT8_T) or not match_data_type(speed, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+
         data = bytearray(2)
         data[0] = pos
         data[1] = speed
@@ -869,7 +988,12 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerPosAbsAll(self, hand_id, raw_pos, speed, motor_cnt, remote_err):
-        if motor_cnt > MAX_MOTOR_CNT:
+        if (
+            not match_list_type(raw_pos, UINT16_T)
+            or not match_list_type(speed, UINT8_T)
+            or not match_data_type(motor_cnt, UINT8_T)
+            or motor_cnt > MAX_MOTOR_CNT
+        ):
             return HAND_RESP_DATA_INVALID
 
         data = bytearray(3 * motor_cnt)
@@ -886,7 +1010,12 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerPosAll(self, hand_id, pos, speed, motor_cnt, remote_err):
-        if motor_cnt > MAX_MOTOR_CNT:
+        if (
+            not match_list_type(pos, UINT16_T)
+            or not match_list_type(speed, UINT8_T)
+            or not match_data_type(motor_cnt, UINT8_T)
+            or motor_cnt > MAX_MOTOR_CNT
+        ):
             return HAND_RESP_DATA_INVALID
 
         data = bytearray(3 * motor_cnt)
@@ -903,7 +1032,12 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerAngleAll(self, hand_id, angle, speed, motor_cnt, remote_err):
-        if motor_cnt > MAX_MOTOR_CNT:
+        if (
+            not match_list_type(angle, INT16_T)
+            or not match_list_type(speed, UINT8_T)
+            or not match_data_type(motor_cnt, UINT8_T)
+            or motor_cnt > MAX_MOTOR_CNT
+        ):
             return HAND_RESP_DATA_INVALID
 
         data = bytearray(3 * motor_cnt)
@@ -920,7 +1054,16 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerStopParams(self, hand_id, finger_id, speed, stop_current, stop_after_period, retry_interval, remote_err):
-        data = bytearray(1 + 2 + 2 +2 +2)
+        if (
+            not match_data_type(finger_id, UINT8_T)
+            or not match_data_type(speed, UINT16_T)
+            or not match_data_type(stop_current, UINT16_T)
+            or not match_data_type(stop_after_period, UINT16_T)
+            or not match_data_type(retry_interval, UINT16_T)
+        ):
+            return HAND_RESP_DATA_INVALID
+
+        data = bytearray(1 + 2 + 2 + 2 + 2)
         data[0] = finger_id
         data[1] = speed & 0xFF
         data[2] = (speed >> 8) & 0xFF
@@ -937,6 +1080,18 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerForcePID(self, hand_id, finger_id, p, i, d, g, remote_err):
+        if not match_data_type(finger_id, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+        
+        if not (1.0 <= p <= 500.0):
+            return HAND_RESP_DATA_INVALID
+        if not (0.0 <= i <= 100.0):
+            return HAND_RESP_DATA_INVALID
+        if not (0.0 <= d <= 500.0):
+            return HAND_RESP_DATA_INVALID
+        if not (0.01 <= g <= 1.0):
+            return HAND_RESP_DATA_INVALID
+        
         data = bytearray(1 + 4 + 4 + 4 + 4)
         data[0] = finger_id
         data[1:5] =   struct.pack('f', p)
@@ -962,6 +1117,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetSelfTestLevel(self, hand_id, self_test_level, remote_err):
+        if not match_data_type(self_test_level, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+        
         data = bytearray(1)
         data[0] = self_test_level
 
@@ -971,6 +1129,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetBeepSwitch(self, hand_id, beep_on, remote_err):
+        if not match_data_type(beep_on, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+        
         data = bytearray(1)
         data[0] = beep_on
 
@@ -980,6 +1141,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_Beep(self, hand_id, duration, remote_err):
+        if not match_data_type(duration, UINT16_T):
+            return HAND_RESP_DATA_INVALID
+        
         data = bytearray(2)
         data[0] = duration & 0xFF
         data[1] = (duration >> 8) & 0xFF
@@ -990,6 +1154,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetButtonPressedCnt(self, hand_id, pressed_cnt, remote_err):
+        if not match_data_type(pressed_cnt, UINT8_T):
+            return HAND_RESP_DATA_INVALID
+        
         data = bytearray(1)
         data[0] = pressed_cnt
 
@@ -1018,6 +1185,9 @@ class OHandSerialAPI:
         return err
 
     def HAND_SetFingerSpeedCtrlParams(self, hand_id, brake_distance, accel_distance, speed_ratio, remote_err):
+        if not match_data_type(brake_distance, UINT16_T) or not match_data_type(accel_distance, UINT16_T):
+            return HAND_RESP_DATA_INVALID
+        
         data = bytearray(8)
         data[0] = brake_distance & 0xFF
         data[1] = brake_distance >> 8 & 0xFF
