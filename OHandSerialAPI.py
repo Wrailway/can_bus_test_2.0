@@ -231,6 +231,7 @@ class OHandSerialAPI:
 
         # Check if response is error
         if (self.packet_data[2] & CMD_ERROR_MASK) != 0:
+            self.is_whole_packet = False
             if remote_err is not None:
                 remote_err.append(self.packet_data[4])
             return HAND_RESP_HAND_ERROR
@@ -831,15 +832,6 @@ class OHandSerialAPI:
     def HAND_SetFingerPID(self, hand_id, finger_id, p, i, d, g, remote_err):
         if not match_data_type(finger_id, UINT8_T):
             return HAND_RESP_DATA_INVALID
-        
-        if not (1.0 <= p <= 500.0):
-            return HAND_RESP_DATA_INVALID
-        if not (0.0 <= i <= 100.0):
-            return HAND_RESP_DATA_INVALID
-        if not (0.0 <= d <= 500.0):
-            return HAND_RESP_DATA_INVALID
-        if not (0.01 <= g <= 1.0):
-            return HAND_RESP_DATA_INVALID
 
         data = bytearray(1 + 4 + 4 + 4 + 4)
         data[0] = finger_id
@@ -1081,15 +1073,6 @@ class OHandSerialAPI:
 
     def HAND_SetFingerForcePID(self, hand_id, finger_id, p, i, d, g, remote_err):
         if not match_data_type(finger_id, UINT8_T):
-            return HAND_RESP_DATA_INVALID
-        
-        if not (1.0 <= p <= 500.0):
-            return HAND_RESP_DATA_INVALID
-        if not (0.0 <= i <= 100.0):
-            return HAND_RESP_DATA_INVALID
-        if not (0.0 <= d <= 500.0):
-            return HAND_RESP_DATA_INVALID
-        if not (0.01 <= g <= 1.0):
             return HAND_RESP_DATA_INVALID
         
         data = bytearray(1 + 4 + 4 + 4 + 4)
