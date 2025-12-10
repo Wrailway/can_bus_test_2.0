@@ -878,6 +878,7 @@ class OHandSerialAPI:
             not match_data_type(finger_id, UINT8_T)
             or not match_data_type(pos_limit_low, UINT16_T)
             or not match_data_type(pos_limit_high, UINT16_T)
+            or pos_limit_low > pos_limit_high
         ):
             return HAND_RESP_DATA_INVALID
 

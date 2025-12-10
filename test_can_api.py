@@ -876,7 +876,7 @@ def test_HAND_SetFingerPosLimit(serial_api_instance):
                    
                     # # 无效范围测试
                     (0, 65535, "取全部范围"),
-                    # (current_end, current_start, "下限大于上限"),
+                    (current_end, current_start, "下限大于上限"),
                     (-1, 100, "下限为负数"),
                     (100, 65536, "上限超出范围"),
                     (-1, 65536, "上下限都无效")
