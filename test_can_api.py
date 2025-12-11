@@ -217,9 +217,9 @@ def test_HAND_GetFingerAngleAll(serial_api_instance):
     target_angle = [0] * MAX_MOTOR_CNT
     current_angle = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
-    err, remtarget_angle_get, current_angle_get= serial_api_instance.HAND_GetFingerAngleAll(HAND_ID, target_angle, current_angle, motor_cnt, [])
+    err, target_angle_get, current_angle_get= serial_api_instance.HAND_GetFingerAngleAll(HAND_ID, target_angle, current_angle, motor_cnt, [])
     assert err == HAND_RESP_SUCCESS,f"获取所有手指值失败: err={err}"
-    logger.info(f"成功获取所有手指当前的逻辑位置值: {remtarget_angle_get}, {current_angle_get}")
+    logger.info(f"成功获取所有手指当前的逻辑位置值: {target_angle_get}, {current_angle_get}")
 
 @pytest.mark.skipif(SKIP_CASE,reason='debug中,先跳过')    
 def test_HAND_GetFingerForcePID(serial_api_instance):
@@ -1868,7 +1868,7 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
     # 默认参数值
-    DEFAULT_POS = 1     # 位置默认值（合法值：0, 1, 2）
+    DEFAULT_POS = 0     # 位置默认值（合法值：0, 1, 2）
     DEFAULT_SPEED = 100   # 速度默认值（范围：0-255）
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
