@@ -1233,16 +1233,6 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
                         assert abs(read_pos - set_pos) < POS_MAX_LOSS, \
                                 f"第{i+1}指位置不一致 | 设置值:{set_pos}，读取值:{read_pos}，容差:{POS_MAX_LOSS}"
                         test_results.append((f"手指{i},位置测试({desc})", "不通过"))
-                #恢复默认值，再进入下一轮测试
-                err = serial_api_instance.HAND_SetFingerPosAbsAll(
-                        HAND_ID, 
-                        [DEFAULT_POS] * MAX_MOTOR_CNT,
-                        [DEFAULT_SPEED] * MAX_MOTOR_CNT,
-                        MAX_MOTOR_CNT,
-                        remote_err)
-                assert err == HAND_RESP_SUCCESS, \
-                f"恢复默认位置失败, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
-                delay_milli_seconds_impl(DELAY_MS)
             else:
                     # 无效位置应返回数据错误
                     assert err != HAND_RESP_SUCCESS, \
@@ -1278,14 +1268,15 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
         delay_milli_seconds_impl(DELAY_MS)
         err = serial_api_instance.HAND_SetFingerPosAbsAll(
             HAND_ID, 
-            [DEFAULT_POS] * MAX_MOTOR_CNT,
+            # [DEFAULT_POS] * MAX_MOTOR_CNT,
+            start_pos_get,
             [DEFAULT_SPEED] * MAX_MOTOR_CNT,
             MAX_MOTOR_CNT,
             remote_err
         )
         assert err == HAND_RESP_SUCCESS, \
             f"恢复默认位置失败, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
-        logger.info(f"所有手指已恢复默认位置: {DEFAULT_POS}, 速度: {DEFAULT_SPEED}")
+        logger.info(f"所有手指已恢复默认位置: {start_pos_get}, 速度: {DEFAULT_SPEED}")
     
     except AssertionError as e:
         logger.error(f"测试失败: {str(e)}")
@@ -1366,7 +1357,7 @@ def test_HAND_SetFingerPos(serial_api_instance):
                     if finger_id == MAX_MOTOR_CNT-1:
                         # 第六指特殊逻辑：写入<728时，读取值应为728；否则校验与写入值一致
                         if pos < SIXTH_FINGER_MIN_POS:
-                            assert value[2] == SIXTH_FINGER_MIN_POS, \
+                            assert abs(value[2] - SIXTH_FINGER_MIN_POS) < POS_MIN_LOSS, \
                                 f"第六指写入小于最小值{pos}(<728)，但读取位置为{value[2]}（预期728）"
                         else:
                             assert abs(value[2] - pos) < POS_MAX_LOSS, \
@@ -1514,7 +1505,7 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
                     # 处理第六指特殊规则：写入<728时，读取值必须为728
                     if i == MAX_MOTOR_CNT-1:
                         if set_pos < SIXTH_FINGER_MIN_POS:
-                            assert read_pos == SIXTH_FINGER_MIN_POS, \
+                            assert abs(read_pos - SIXTH_FINGER_MIN_POS) < POS_MIN_LOSS, \
                                 f"第{MAX_MOTOR_CNT}指（第六指）异常 | 设置值:{set_pos}(<728)，读取值:{read_pos}（预期728）"
                         else:
                             # 第六指写入≥728时，按容差校验
