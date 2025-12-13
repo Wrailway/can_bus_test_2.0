@@ -22,9 +22,12 @@ PID_MAX_LOSS = 1e-2
 POS_MIN_LOSS = 200
 POS_MAX_LOSS = 200
 HAND_ID = 0X02
-DELAY_MS = 2500 #单个写函数等待时间
-DELAY_MS_FUN = 6000#每个case执行等待时间
-DELAY_MS_DEVICE_REBOOT = 15000#设备重启等待时间
+DELAY_MS = 1600 #单个写函数等待时间
+DELAY_MS_FUN = 3000# The above code is a Python comment that contains the number 1000. Comments in Python
+# are used to provide explanations or notes within the code and are not executed by the
+# interpreter.
+1000#每个case执行等待时间
+DELAY_MS_DEVICE_REBOOT = 10000#设备重启等待时间
 SKIP_CASE = True # 默认跳过添加mark的case
 
 # 初始化 API 实例（pytest夹具）
@@ -970,7 +973,7 @@ def test_HAND_FingerStop(serial_api_instance):
     logger.info(f'设置停止移动手指成功')
     
 def get_FingerPosAbs(serial_api_instance,finger_id):
-    delay_milli_seconds_impl(DELAY_MS*2)
+    delay_milli_seconds_impl(DELAY_MS)
     target_pos = [0]
     current_pos = [0]
     return serial_api_instance.HAND_GetFingerPosAbs(HAND_ID, finger_id, target_pos, current_pos, [])
@@ -1131,7 +1134,7 @@ def test_HAND_SetFingerPosAbs(serial_api_instance):
     return test_results  # 返回测试结果，便于上层统计
 
 def get_HAND_FingerPosAbsAll(serial_api_instance):
-    delay_milli_seconds_impl(DELAY_MS*2)
+    delay_milli_seconds_impl(DELAY_MS)
     target_pos = [0] * MAX_MOTOR_CNT
     current_pos = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
@@ -1294,7 +1297,7 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
         logger.info("=======================")
 
 def get_HAND_FingerPos(serial_api_instance,finger_id):
-    delay_milli_seconds_impl(DELAY_MS*2)
+    delay_milli_seconds_impl(DELAY_MS)
     target_pos = [0]
     current_pos = [0]
     return serial_api_instance.HAND_GetFingerPos(HAND_ID, finger_id, target_pos, current_pos, [])
@@ -1426,7 +1429,7 @@ def test_HAND_SetFingerPos(serial_api_instance):
         logger.info("=======================")
         
 def get_FingerPosAll(serial_api_instance):
-    delay_milli_seconds_impl(DELAY_MS*2)
+    delay_milli_seconds_impl(DELAY_MS*2.5)
     target_pos = [0] * MAX_MOTOR_CNT
     current_pos = [0] * MAX_MOTOR_CNT
     motor_cnt = [MAX_MOTOR_CNT]
@@ -1437,7 +1440,7 @@ def get_FingerPosAll(serial_api_instance):
 def test_HAND_SetFingerPosAll(serial_api_instance):
     # 定义测试常量
     # 默认参数值
-    delay_milli_seconds_impl(DELAY_MS_FUN)
+    delay_milli_seconds_impl(DELAY_MS_FUN*2)
     DEFAULT_POS = 0     # 位置默认值
     DEFAULT_SPEED = 100   # 速度默认值
     SIXTH_FINGER_MIN_POS = 728 # 第六指硬件最小值
@@ -1489,8 +1492,6 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
             if is_all_pos_valid:  # 有效位置范围
                 assert err == HAND_RESP_SUCCESS, \
                     f"设置有效位置失败: {desc}, 错误码:err={err},remote_err={remote_err[0]}"
-                # delay_milli_seconds_impl(DELAY_MS)
-                # 批量位置设置后的校验逻辑
                 value = get_FingerPosAll(serial_api_instance)
                 # 1. 校验获取位置接口调用成功
                 assert value[0] == HAND_RESP_SUCCESS, \
@@ -1583,7 +1584,7 @@ def get_angle_range(serial_api_instance, finger_id=0):
     :param finger_id: 要测试的手指ID（0~5）
     :return: 指定手指的实际最小值, 指定手指的实际最大值
     """
-    delay_milli_seconds_impl(DELAY_MS*2)
+    # delay_milli_seconds_impl(DELAY_MS)
     # 核心常量定义
     SPEED = 100
     ANGLE_MIN_THEORY = -32768  # 理论最小值
@@ -1595,12 +1596,13 @@ def get_angle_range(serial_api_instance, finger_id=0):
 
     try:
         # 2. 设置指定手指到理论最小值，读取实际生效的最小值
+        delay_milli_seconds_impl(DELAY_MS)
         set_min_err = serial_api_instance.HAND_SetFingerAngle(
             HAND_ID, finger_id, ANGLE_MIN_THEORY, SPEED, []
         )
         assert set_min_err == HAND_RESP_SUCCESS, f"设置手指{finger_id}最小值失败，错误码：{set_min_err}"
-        delay_milli_seconds_impl(DELAY_MS)
 
+        delay_milli_seconds_impl(DELAY_MS*2.5)
         target_angle_min = [0]
         current_angle_min = [0]
         read_min_result = serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle_min, current_angle_min, [])
@@ -1612,11 +1614,10 @@ def get_angle_range(serial_api_instance, finger_id=0):
         delay_milli_seconds_impl(DELAY_MS)
         set_max_err = serial_api_instance.HAND_SetFingerAngle(HAND_ID, finger_id, ANGLE_MAX_THEORY, SPEED, [])
         assert set_max_err == HAND_RESP_SUCCESS, f"设置手指{finger_id}最大值失败，错误码：{set_max_err}"
-        delay_milli_seconds_impl(DELAY_MS)
 
         target_angle_max = [0]
         current_angle_max = [0]
-        delay_milli_seconds_impl(DELAY_MS)
+        delay_milli_seconds_impl(DELAY_MS*2.5)
         read_max_result = serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle_max, current_angle_max, [])
         read_max_err = read_max_result[0]
         assert read_max_err == HAND_RESP_SUCCESS, f"读取手指{finger_id}最大值失败，错误码：{read_max_err}"
@@ -1630,7 +1631,7 @@ def get_angle_range(serial_api_instance, finger_id=0):
         recover_angle = finger_min_val if finger_id == 5 else finger_max_val
         recover_err = serial_api_instance.HAND_SetFingerAngle(HAND_ID, finger_id, recover_angle, SPEED, [])
         assert recover_err == HAND_RESP_SUCCESS, f"恢复手指{finger_id}失败，错误码：{recover_err}"
-
+        delay_milli_seconds_impl(DELAY_MS)
         return finger_min_val, finger_max_val
 
     except AssertionError as e:
@@ -1669,7 +1670,7 @@ def test_HAND_SetFingerAngle(serial_api_instance):
             ])
 
     test_results = []
-
+    delay_milli_seconds_impl(DELAY_MS)
     try:
         # 单手指独立测试
         for finger_id in range(MAX_MOTOR_CNT):
@@ -1686,7 +1687,10 @@ def test_HAND_SetFingerAngle(serial_api_instance):
                 # 读取角度
                 target_angle = [0]
                 current_angle = [0]
-                delay_milli_seconds_impl(DELAY_MS)
+                # The code snippet you provided is not valid Python code. It seems to be a placeholder
+                # or a comment. If you provide the actual implementation of the
+                # `delay_milli_seconds_impl` function, I can help explain what it does.
+                delay_milli_seconds_impl(DELAY_MS*2.5)
                 read_result = serial_api_instance.HAND_GetFingerAngle(HAND_ID, finger_id, target_angle, current_angle, [])
                 read_err = read_result[0]
                 current_angle_val = read_result[2]
@@ -1782,7 +1786,7 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
             target_fids = [target_fid] if isinstance(target_fid, int) else target_fid
 
             for angle, case_desc in angle_test_cases:
-                delay_milli_seconds_impl(DELAY_MS)
+                # delay_milli_seconds_impl(DELAY_MS)
                 # 构造批量角度数组（严格匹配默认值规则）
                 angle_array = []
                 for fid in range(MAX_MOTOR_CNT):
@@ -1808,6 +1812,7 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
                 assert set_err == HAND_RESP_SUCCESS, \
                     f"{case_label} 批量设置失败，错误码={set_err}，远程错误={remote_err[0] if remote_err else '无'}"
                 
+                delay_milli_seconds_impl(DELAY_MS*2.5)
                 # 校验目标手指角度（复用单手指验收通过的规则）
                 for fid in target_fids:
                     target_angle = [0]
@@ -1859,6 +1864,7 @@ def test_HAND_SetFingerAngleAll(serial_api_instance):
             logger.info(f"{case}: {res}")
             
 def get_HAND_ThumbRootPos(serial_api_instance):
+    delay_milli_seconds_impl(DELAY_MS)
     raw_encoder = [0]
     pos = [0]
     return serial_api_instance.HAND_GetThumbRootPos(HAND_ID, raw_encoder, pos, [])
@@ -1900,7 +1906,7 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
         logger.info(f"测试拇指根部位置参数")
         for pos, desc in PARAM_TEST_DATA['thumb_root_pos']:
             remote_err = []
-            delay_milli_seconds_impl(DELAY_MS)
+            # delay_milli_seconds_impl(DELAY_MS)
             err = serial_api_instance.HAND_SetThumbRootPos(
                 HAND_ID, 
                 pos,              # 测试变量位置值
@@ -2207,7 +2213,7 @@ def test_HAND_SetSelfTestLevel(serial_api_instance):
     err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, SELF_TEST_LEVEL['半自检'], remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置半自检失败，错误码: err={err},remote_err={remote_err[0]}"
     
-    delay_milli_seconds_impl(DELAY_MS*2)
+    delay_milli_seconds_impl(DELAY_MS)
     
     current_level = [0]
     err,_ = serial_api_instance.HAND_GetSelfTestLevel(HAND_ID, current_level, [])
@@ -2219,14 +2225,14 @@ def test_HAND_SetSelfTestLevel(serial_api_instance):
     )
     logger.info("成功设置半自检")
     
-    delay_milli_seconds_impl(DELAY_MS*2)
+    delay_milli_seconds_impl(DELAY_MS)
     # 测试设置为完整自检（恢复默认状态）
     remote_err = []
     err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, SELF_TEST_LEVEL['完整自检'], remote_err)
     assert err == HAND_RESP_SUCCESS, f"设置完整自检失败，错误码: err={err},remote_err={remote_err[0]}"
-    delay_milli_seconds_impl(DELAY_MS*2) # 等待自检执行
+    delay_milli_seconds_impl(DELAY_MS) # 等待自检执行
     
-    delay_milli_seconds_impl(DELAY_MS*2)
+    delay_milli_seconds_impl(DELAY_MS)
     err,_ = serial_api_instance.HAND_GetSelfTestLevel(HAND_ID, current_level, [])
     assert err == HAND_RESP_SUCCESS, f"获取自检级别失败，错误码:err={err}"
     
@@ -2236,7 +2242,7 @@ def test_HAND_SetSelfTestLevel(serial_api_instance):
     )
     logger.info("成功设置完整自检")
     
-    delay_milli_seconds_impl(DELAY_MS*2)
+    delay_milli_seconds_impl(DELAY_MS)
     # 确保测试结束后恢复默认状态
     remote_err = [0]
     err = serial_api_instance.HAND_SetSelfTestLevel(HAND_ID, SELF_TEST_LEVEL['完整自检'], remote_err)
