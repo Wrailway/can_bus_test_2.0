@@ -23,7 +23,7 @@ POS_MIN_LOSS = 200
 POS_MAX_LOSS = 200
 HAND_ID = 0X02
 DELAY_MS = 1600 #单个写函数等待时间
-DELAY_MS_FUN = 3000# The above code is a Python comment that contains the number 1000. Comments in Python
+DELAY_MS_FUN = 5000# The above code is a Python comment that contains the number 1000. Comments in Python
 # are used to provide explanations or notes within the code and are not executed by the
 # interpreter.
 1000#每个case执行等待时间
@@ -841,7 +841,9 @@ def get_FingerPosLimit(serial_api_instance,finger_id):
     high_limit = [0]
     return serial_api_instance.HAND_GetFingerPosLimit(HAND_ID, finger_id, low_limit, high_limit, [])
         
-@pytest.mark.skipif(SKIP_CASE,reason='超出范围值(校准范围)，不报无效值错误，提bug: #5738,先跳过')
+@pytest.mark.skipif(# The above code is using a special comment `SKIP_CASE` to indicate that the
+# following code block should be skipped or ignored.
+SKIP_CASE,reason='超出范围值(校准范围)，不报无效值错误，提bug: #5738,先跳过')
 def test_HAND_SetFingerPosLimit(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
     # 定义测试常量
@@ -1277,6 +1279,7 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
             MAX_MOTOR_CNT,
             remote_err
         )
+        delay_milli_seconds_impl(DELAY_MS*2.5)
         assert err == HAND_RESP_SUCCESS, \
             f"恢复默认位置失败, 错误码: err={err}, remote_err={remote_err[0] if remote_err else '无'}"
         logger.info(f"所有手指已恢复默认位置: {start_pos_get}, 速度: {DEFAULT_SPEED}")
@@ -1297,7 +1300,7 @@ def test_HAND_SetFingerPosAbsAll(serial_api_instance):
         logger.info("=======================")
 
 def get_HAND_FingerPos(serial_api_instance,finger_id):
-    delay_milli_seconds_impl(DELAY_MS)
+    delay_milli_seconds_impl(DELAY_MS*2.5)
     target_pos = [0]
     current_pos = [0]
     return serial_api_instance.HAND_GetFingerPos(HAND_ID, finger_id, target_pos, current_pos, [])
@@ -1351,7 +1354,7 @@ def test_HAND_SetFingerPos(serial_api_instance):
                 if 0 <= pos <= 65535:  # 有效位置范围
                     assert err == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 设置有效位置失败: {desc}, 错误码: err={err},remote_err={remote_err[0]}"
-                    # delay_milli_seconds_impl(DELAY_MS)
+                    delay_milli_seconds_impl(DELAY_MS*2.5)
                     value = get_HAND_FingerPos(serial_api_instance,finger_id)
                     assert value[0] == HAND_RESP_SUCCESS, \
                         f"手指 {finger_id} 获取有效位置失败: {desc}, 错误码: err={err}"
@@ -1440,7 +1443,7 @@ def get_FingerPosAll(serial_api_instance):
 def test_HAND_SetFingerPosAll(serial_api_instance):
     # 定义测试常量
     # 默认参数值
-    delay_milli_seconds_impl(DELAY_MS_FUN*2)
+    delay_milli_seconds_impl(DELAY_MS_FUN)
     DEFAULT_POS = 0     # 位置默认值
     DEFAULT_SPEED = 100   # 速度默认值
     SIXTH_FINGER_MIN_POS = 728 # 第六指硬件最小值
@@ -1492,6 +1495,7 @@ def test_HAND_SetFingerPosAll(serial_api_instance):
             if is_all_pos_valid:  # 有效位置范围
                 assert err == HAND_RESP_SUCCESS, \
                     f"设置有效位置失败: {desc}, 错误码:err={err},remote_err={remote_err[0]}"
+                # delay_milli_seconds_impl(DELAY_MS*2.5)
                 value = get_FingerPosAll(serial_api_instance)
                 # 1. 校验获取位置接口调用成功
                 assert value[0] == HAND_RESP_SUCCESS, \
