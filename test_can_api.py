@@ -1990,10 +1990,10 @@ def test_HAND_SetThumbRootPos(serial_api_instance):
 def test_HAND_SetFingerForcePID(serial_api_instance):
     delay_milli_seconds_impl(DELAY_MS_FUN)
         # 默认参数值
-    DEFAULT_P = 250.00
-    DEFAULT_I = 2.00
-    DEFAULT_D = 250.00
-    DEFAULT_G = 1.00
+    DEFAULT_P = 100.0
+    DEFAULT_I = 0.2
+    DEFAULT_D = 100.0
+    DEFAULT_G = 1.0
     # 定义各参数的测试值(包含有效/边界/无效值)
     PARAM_TEST_DATA = {
         'P': [
@@ -2044,6 +2044,10 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
         """------------------- 单变量测试 -------------------"""
         for finger_id in range(MAX_MOTOR_CNT-1):
             logger.info(f"\n===== 开始测试手指 {finger_id} 的力控PID参数 =====")
+            if finger_id==0:
+                DEFAULT_P = 50.0
+            else:
+                DEFAULT_P = 100.0
             
             # 测试P参数
             logger.info(f"测试手指 {finger_id} 的P参数")
@@ -2172,6 +2176,10 @@ def test_HAND_SetFingerForcePID(serial_api_instance):
         for finger_id in range(MAX_MOTOR_CNT-1):
             remote_err = []
             delay_milli_seconds_impl(DELAY_MS)
+            if finger_id==0:
+                DEFAULT_P = 50.0
+            else:
+                DEFAULT_P = 100.0
             err = serial_api_instance.HAND_SetFingerForcePID(
                 HAND_ID, finger_id, 
                 DEFAULT_P, DEFAULT_I, DEFAULT_D, DEFAULT_G, remote_err
